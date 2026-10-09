@@ -286,6 +286,8 @@ function openSavedScreen() {
   if (!server || !id) return false
 
   current = { serverUrl: server, screenId: id }
+  const cachedAsset = readSavedContent(id)
+  if (cachedAsset !== undefined) showAsset(cachedAsset)
   hideOverlay()
   loadScreen().then(startRealtime)
   return true
@@ -457,7 +459,8 @@ if (!app.requestSingleInstanceLock()) {
     app.setAppUserModelId('com.trfastenings.screenplayer')
     Menu.setApplicationMenu(null)
     createWindow()
-    ensureInstalled()
+    // Keep first paint responsive; shortcut maintenance can happen after the player opens.
+    setImmediate(ensureInstalled)
   })
 
   app.on('before-quit', stopRealtime)
