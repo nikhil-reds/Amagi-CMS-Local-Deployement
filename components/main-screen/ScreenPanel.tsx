@@ -38,6 +38,7 @@ type ScreenAsset = {
 
 type Screen = {
   id: string
+  code: string
   name: string
   createdAt: string
   assets?: ScreenAsset[]
@@ -246,42 +247,11 @@ export default function ScreenPanel() {
   async function assignFile(screenId: string, file: File) {
     setAssigningId(screenId)
     try {
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const folder = "rubenius/documents";
-      const signRes = await fetch("/api/cloudinary/sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ params: { timestamp, folder } })
-      });
-      if (!signRes.ok) throw new Error("Failed to get signature");
-      const { signature, apiKey, cloudName } = await signRes.json();
-
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("api_key", apiKey);
-      formData.append("timestamp", timestamp.toString());
-      formData.append("signature", signature);
-      formData.append("folder", folder);
-
-      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      formData.append("files", file);
+      const saveRes = await fetch('/api/upload', {
         method: "POST",
         body: formData
-      });
-      if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
-      const res = await uploadRes.json();
-
-      const uploadedFiles = [{
-        name: file.name,
-        size: file.size,
-        mimeType: file.type || "application/octet-stream",
-        url: res.secure_url,
-        publicId: res.public_id,
-      }];
-
-      const saveRes = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files: uploadedFiles })
       });
       
       const data = await saveRes.json().catch(() => null)
@@ -485,7 +455,7 @@ export default function ScreenPanel() {
                         <Plus className="size-4" />
                       </button>
                       <button
-                        onClick={() => window.open(`/view/screen/${screen.id}`, '_blank', 'noopener,noreferrer')}
+                        onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
                         className="flex size-9 md:size-8 items-center justify-center rounded-lg bg-white/90 dark:bg-zinc-800/90 text-zinc-500 dark:text-zinc-400 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 transition hover:text-black dark:hover:text-white"
                         aria-label={`Open ${screen.name}`}
                         title="Open screen URL"
