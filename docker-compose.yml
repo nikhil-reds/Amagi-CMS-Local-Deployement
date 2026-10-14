@@ -1,0 +1,68 @@
+services:
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    restart: always
+    command: centrifugo -c /centrifugo/config.json
+    environment:
+      CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET}
+      CENTRIFUGO_HTTP_API_KEY: ${CENTRIFUGO_API_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./centrifugo:/centrifugo
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    shm_size: 128mb
+    # Expose PostgreSQL to localhost for Prisma and local administration tools.
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: multimedia
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d multimedia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    # Listens on port 3000 on every network interface of the PC, so other devices on the WiFi can reach it.
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env # MinIO, Centrifugo, and other service keys. DATABASE_URL is overridden below.
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/multimedia
+      # Plain http://<LAN-IP> cannot store Secure cookies, so login would fail without this.
+      COOKIE_SECURE: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:
