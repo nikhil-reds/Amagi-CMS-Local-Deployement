@@ -2,6 +2,9 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# postinstall runs "prisma generate", which needs the schema and config present before npm ci.
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npm ci --no-audit --no-fund --prefer-offline
 
 # ── Stage 2: build ────────────────────────────────────────────────────────────
