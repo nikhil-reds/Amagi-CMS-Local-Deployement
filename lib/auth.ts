@@ -76,7 +76,11 @@ export async function createSession(userId: string, request: NextRequest, rememb
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Browsers only store Secure cookies over HTTPS (localhost excepted), so a LAN deploy
+    // served over plain http://<LAN-IP> sets COOKIE_SECURE=false.
+    secure: process.env.COOKIE_SECURE
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production',
     path: '/',
     // Without "remember", it's a browser-session cookie.
     ...(remember ? { maxAge: maxAgeMs / 1000 } : {}),
