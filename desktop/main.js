@@ -4,7 +4,7 @@ const path = require('path')
 const { Readable } = require('stream')
 const { pipeline } = require('stream/promises')
 const { pathToFileURL } = require('url')
-const Ably = require('ably')
+const { Centrifuge } = require('centrifuge')
 
 // No polling and no retry loops. The player syncs what is assigned to its screen ONCE per
 // launch, saves it to local disk, and plays from the local copy. If the server cannot be
@@ -54,9 +54,20 @@ function saveConfig(config) {
 }
 
 function normalizeServerUrl(value) {
-  let url = String(value || '').trim().replace(/\/+$/, '')
-  if (url && !/^https?:\/\//i.test(url)) url = `https://${url}`
-  return url
+  let raw = String(value || '').trim()
+  if (!raw) return ''
+  if (!/^https?:\/\//i.test(raw)) raw = `http://${raw}`
+  try {
+    const parsed = new URL(raw)
+    // The player expects the CMS origin only. Repair old values such as
+    // http://localhost:3000/view/screen saved by earlier builds.
+    parsed.pathname = ''
+    parsed.search = ''
+    parsed.hash = ''
+    return parsed.toString().replace(/\/$/, '')
+  } catch {
+    return ''
+  }
 }
 
 // ── Content: fetch once, save locally, play from disk ─────────────────────────
@@ -82,8 +93,13 @@ function extensionFor(asset) {
 }
 
 async function downloadTo(url, file) {
-  const response = await net.fetch(url, { signal: AbortSignal.timeout(10 * 60_000) })
-  if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`)
+  let response
+  try {
+    response = await net.fetch(url, { signal: AbortSignal.timeout(10 * 60_000) })
+  } catch (error) {
+    throw new Error(`MinIO download failed: ${error?.message || error}`)
+  }
+  if (!response.ok || !response.body) throw new Error(`MinIO download failed: HTTP ${response.status}`)
   const partial = `${file}.part`
   await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(partial))
   fs.renameSync(partial, file)
@@ -107,10 +123,11 @@ async function syncContent({ serverUrl, screenId }) {
   if (doc.websiteUrl) {
     // A live website cannot be stored locally; it is opened from its address.
     asset = { ...base, url: doc.websiteUrl }
-  } else if (doc.cloudinaryUrl) {
-    const file = path.join(cacheDir(), `${doc.id}-${new Date(doc.updatedAt).getTime()}${extensionFor(doc)}`)
-    if (!fs.existsSync(file)) await downloadTo(doc.cloudinaryUrl, file)
-    asset = { ...base, file }
+  } else if (doc.s3Url) {
+    // MinIO objects are public, so let Chromium load them directly. This avoids
+    // a second download/cache failure in the Electron main process and supports
+    // native video streaming and range requests.
+    asset = { ...base, url: doc.s3Url }
   } else {
     asset = null
   }
@@ -182,7 +199,7 @@ async function loadScreen(live = false) {
       asset = readSavedContent(target.screenId)
       if (asset === undefined) {
         lastShownKey = null
-        return show({ kind: 'message', text: 'Could not reach the server and nothing is saved yet. Press Ctrl+R to try again.' })
+        return show({ kind: 'message', text: `Could not load content. ${error?.message || 'No saved copy is available.'} Press Ctrl+R to try again.` })
       }
     }
     if (current !== target) return // screen was switched while syncing
@@ -198,7 +215,7 @@ async function loadScreen(live = false) {
   }
 }
 
-// ── Realtime nudges (Ably) ────────────────────────────────────────────────────
+// ── Realtime nudges (Centrifugo) ─────────────────────────────────────────────
 
 const realtimeCachePath = () => path.join(app.getPath('userData'), 'realtime.json')
 let realtimeClient = null
@@ -219,7 +236,7 @@ function stopRealtime() {
   }
 }
 
-// Ask the CMS once which channel/key to use (cached for offline launches), then subscribe.
+// Ask the CMS once which channel/token to use (cached for offline launches), then subscribe.
 async function startRealtime() {
   stopRealtime()
   const target = current
@@ -228,24 +245,28 @@ async function startRealtime() {
   let info
   try {
     info = await fetchJson(`${target.serverUrl}/api/screens/${encodeURIComponent(target.screenId)}/realtime`)
-    if (info?.key) fs.writeFileSync(realtimeCachePath(), JSON.stringify({ ...info, serverUrl: target.serverUrl, screenId: target.screenId }))
+    if (info?.token) fs.writeFileSync(realtimeCachePath(), JSON.stringify({ ...info, serverUrl: target.serverUrl, screenId: target.screenId }))
   } catch {
     const cached = readJson(realtimeCachePath())
     if (cached.serverUrl === target.serverUrl && cached.screenId === target.screenId) info = cached
   }
-  if (current !== target || !info?.key || !info?.channel) return
+  if (current !== target || !info?.url || !info?.token || !info?.channel) return
 
   try {
-    const client = new Ably.Realtime({ key: info.key, echoMessages: false })
+    const client = new Centrifuge(info.url, { token: info.token })
     realtimeClient = client
     let connectedBefore = false
-    client.connection.on('connected', () => {
+    client.on('connected', () => {
       // A (re)connection may follow missed messages, so sync once. The very first
       // connection only needs one if the launch sync failed (e.g. started offline).
       if (connectedBefore || !lastSyncOk) scheduleLiveSync()
       connectedBefore = true
     })
-    client.channels.get(info.channel).subscribe('changed', scheduleLiveSync).catch((error) => console.error('Realtime subscribe failed', error.message))
+    const subscription = client.newSubscription(info.channel)
+    subscription.on('publication', scheduleLiveSync)
+    subscription.on('error', (error) => console.error('Realtime subscribe failed', error))
+    subscription.subscribe()
+    client.connect()
   } catch (error) {
     console.error('Realtime unavailable', error)
   }
