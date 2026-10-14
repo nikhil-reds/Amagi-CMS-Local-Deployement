@@ -14,6 +14,8 @@ export function proxy(request: NextRequest) {
   const isReadOnly = request.method === 'GET' || request.method === 'HEAD'
   const isPublicApi =
     pathname.startsWith('/api/auth') || (isReadOnly && pathname.startsWith('/api/screens'))
+  // Multipart uploads must bypass proxy body buffering; /api/upload performs its own auth check.
+  if (pathname === '/api/upload') return NextResponse.next()
 
   if (
     pathname.startsWith('/_next') ||
@@ -54,7 +56,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - api/upload (large multipart uploads are authenticated in the route)
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/upload).*)',
   ],
 }
