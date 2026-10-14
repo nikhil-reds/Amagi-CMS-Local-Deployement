@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { assetUrl } from '@/lib/asset-url'
 
 // Links that point straight at an image or video are stored with that media type
 // so screens render them as media instead of as a web page.
@@ -30,7 +31,10 @@ export async function GET() {
     })
 
     // Cloudinary URLs are already permanent, no need for presigned URLs
-    return NextResponse.json(documents)
+    return NextResponse.json(await Promise.all(documents.map(async (document) => ({
+      ...document,
+      s3Url: await assetUrl(document),
+    }))))
   } catch (error) {
     console.error('[documents GET]', error)
     return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
