@@ -39,6 +39,7 @@ type SessionItem = {
 
 type ScreenItem = {
   id: string
+  code: string
   name: string
   createdAt: string
   updatedAt: string
@@ -277,9 +278,8 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => {
-                            const url = `${window.location.origin}/view/screen/${screen.id}`
-                            navigator.clipboard.writeText(url)
-                            toast.success('Screen URL copied')
+                            navigator.clipboard.writeText(screen.code)
+                            toast.success('Screen ID copied')
                           }}
                           className="p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-200/50 dark:hover:text-zinc-50 dark:hover:bg-zinc-800/50 rounded-md transition-colors cursor-pointer"
                           title="Copy URL"
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                           <Copy className="size-4" />
                         </button>
                         <Link
-                          href={`/view/screen/${screen.id}`}
+                          href={`/view/screen/${screen.code}`}
                           target="_blank"
                           className="p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-200/50 dark:hover:text-zinc-50 dark:hover:bg-zinc-800/50 rounded-md transition-colors cursor-pointer"
                           title="Open Screen"
