@@ -45,3 +45,6 @@ next-env.d.ts
 # desktop (Electron) app
 /desktop/node_modules
 /desktop/dist
+
+# local docker tar archives
+*.tar
