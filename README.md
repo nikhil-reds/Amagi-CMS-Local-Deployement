@@ -299,7 +299,7 @@ An Electron kiosk app that plays a screen's assigned content full screen on a Wi
 
 - The app checks the CMS every 30 seconds and reloads when the screen's assigned asset changes. If the page fails to load, it retries every 10 seconds.
 - The last server and Screen ID are saved in `%APPDATA%\TR Fastenings Screen Player\config.json`.
-- The default server address is built into the `.exe` from the `CMS_URL` GitHub Actions variable (Settings → Secrets and variables → Actions → Variables). If it's empty, the modal asks for it ("Server settings").
+- The default server address is `http://localhost:3000`. The player stores only the CMS base address; do not enter `/view/screen` or `/api`. For another computer, use the CMS host's LAN address, such as `http://192.168.1.25:3000`.
 
 ```bash
 cd desktop
@@ -309,3 +309,22 @@ npm run dist   # build desktop/dist/TRFasteningsScreenPlayer-<version>.exe
 ```
 
 **CI:** `.github/workflows/build-desktop.yml` runs on every push to `main`. It builds the portable `.exe` on `windows-latest` and uploads it as the `TRFasteningsScreenPlayer-windows` artifact. To download it, open the run under the repo's **Actions** tab.
+
+### Local realtime deployment
+
+The local deployment uses self-hosted Centrifugo instead of Ably. Add these variables to `.env`:
+
+```env
+CENTRIFUGO_HTTP_URL=http://centrifugo:8000
+CENTRIFUGO_PUBLIC_URL=ws://YOUR-LAN-IP:8000/connection/websocket
+CENTRIFUGO_API_KEY=replace-with-a-long-random-value
+CENTRIFUGO_TOKEN_SECRET=replace-with-a-different-long-random-value
+```
+
+Replace `YOUR-LAN-IP` in `desktop/build-config.json` with the computer's LAN address, then run `docker compose up -d --build`. Rebuild the player with `cd desktop; npm install; npm run dist`.
+
+### Local file storage
+
+Uploaded files are stored in MinIO. The MinIO console is available at `http://YOUR-LAN-IP:9001`, and the S3-compatible API is available at `http://YOUR-LAN-IP:9000`. Set the `MINIO_*` variables in `.env` before starting Docker. New uploads use `/api/upload` and are returned through short-lived presigned URLs; the Electron player never receives MinIO credentials.
+
+PostgreSQL is local as well. The host connection is `postgresql://postgres:postgres@localhost:5432/multimedia`; containers use the internal `db` hostname. Data persists in the `postgres_data` Docker volume.
