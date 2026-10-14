@@ -36,6 +36,6 @@
     }
   },
   "dependencies": {
-    "ably": "^2.29.0"
+    "centrifuge": "^5.3.1"
   }
 }
