@@ -44,6 +44,7 @@ type AssignedAsset = {
 
 type Screen = {
   id: string
+  code: string
   name: string
   createdAt: string
   updatedAt: string
@@ -162,10 +163,10 @@ export default function ScreensDashboard() {
   }
 
   const handleCopyUrl = async (id: string) => {
-    const screenUrl = `${window.location.origin}/view/screen/${id}`
     try {
-      await navigator.clipboard.writeText(screenUrl)
-      toast.success('Screen URL copied to clipboard')
+      const screen = screens.find((item) => item.id === id)
+      await navigator.clipboard.writeText(screen?.code || id)
+      toast.success('Screen ID copied to clipboard')
     } catch {
       toast.error('Unable to copy screen URL')
     }
@@ -309,7 +310,7 @@ export default function ScreensDashboard() {
                   </button>
                   <div className="flex shrink-0 gap-0.5">
                     <button
-                      onClick={() => window.open(`/view/screen/${screen.id}`, '_blank', 'noopener,noreferrer')}
+                      onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
                       className="flex size-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       aria-label={`Open ${screen.name}`}
                     >
@@ -399,7 +400,7 @@ export default function ScreensDashboard() {
                           <Info className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => window.open(`/view/screen/${screen.id}`, '_blank', 'noopener,noreferrer')}
+                          onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
                           className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
                           aria-label={`Open ${screen.name}`}
                           title="Open screen URL"
