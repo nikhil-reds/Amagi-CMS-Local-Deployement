@@ -53,7 +53,12 @@ model Document {
 
   sourceType DocumentSourceType @default(FILE)
 
-  // Cloudinary location for uploaded files
+  // MinIO/S3-compatible object location for uploaded files
+  s3Bucket           String?
+  s3Key              String?
+  s3Url              String?
+
+  // Legacy Cloudinary location retained during migration
   cloudinaryUrl      String?
   cloudinaryPublicId String?
 
@@ -70,6 +75,7 @@ model Document {
 
 model Screen {
   id        String   @id @default(cuid())
+  code      String   @unique @db.VarChar(5)
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
