@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
 import { publishScreenChanged } from '@/lib/realtime'
+import { screenIdentifierWhere } from '@/lib/screen-code'
 
 export async function GET(
   _req: NextRequest,
@@ -9,9 +10,7 @@ export async function GET(
 ) {
   try {
     const { screenId } = await params
-    const screen = await prisma.screen.findUnique({
-      where: { id: screenId },
-    })
+    const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId) })
 
     if (!screen) {
       return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
@@ -39,8 +38,10 @@ export async function PATCH(
     const data: { name?: string } = {}
     if (name !== undefined) data.name = name
 
+    const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), select: { id: true } })
+    if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
     const updated = await prisma.screen.update({
-      where: { id: screenId },
+      where: { id: screen.id },
       data,
     })
 
@@ -60,10 +61,12 @@ export async function DELETE(
 
   try {
     const { screenId } = await params
+    const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), select: { id: true } })
+    if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
     await prisma.screen.delete({
-      where: { id: screenId },
+      where: { id: screen.id },
     })
-    await publishScreenChanged(screenId)
+    await publishScreenChanged(screen.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[screens DELETE]', error)
