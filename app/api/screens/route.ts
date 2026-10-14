@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
+import { createScreenCode } from '@/lib/screen-code'
 
 export async function GET() {
   try {
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
 
     const screen = await prisma.screen.create({
       data: {
+        code: await createScreenCode(),
         name: screenName,
       },
     })
