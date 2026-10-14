@@ -1,15 +1,16 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { assetUrl } from '@/lib/asset-url'
 import CloseButton from './CloseButton'
 import UniversalMediaViewer from '@/components/UniversalMediaViewer'
 
 async function fetchDoc(id: string) {
   const doc = await prisma.document.findUnique({
     where: { id },
-    select: { id: true, name: true, mimeType: true, cloudinaryUrl: true, websiteUrl: true },
+    select: { id: true, name: true, mimeType: true, s3Key: true, s3Url: true, cloudinaryUrl: true, websiteUrl: true },
   })
   if (!doc) return null
-  return { id: doc.id, name: doc.name, mimeType: doc.mimeType, s3Url: doc.cloudinaryUrl || doc.websiteUrl || '' }
+  return { id: doc.id, name: doc.name, mimeType: doc.mimeType, s3Url: await assetUrl(doc) }
 }
 
 export default async function ViewerPage({
