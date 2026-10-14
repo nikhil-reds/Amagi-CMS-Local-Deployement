@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { assetUrl } from '@/lib/asset-url'
 
 export async function GET(
   _req: NextRequest,
@@ -8,14 +9,14 @@ export async function GET(
   const { id } = await params
   const doc = await prisma.document.findUnique({
     where: { id },
-    select: { id: true, name: true, mimeType: true, cloudinaryUrl: true, status: true },
+    select: { id: true, name: true, mimeType: true, s3Key: true, s3Url: true, websiteUrl: true, cloudinaryUrl: true, status: true },
   })
   if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({
     id: doc.id,
     name: doc.name,
     mimeType: doc.mimeType,
-    s3Url: doc.cloudinaryUrl,
+    s3Url: await assetUrl(doc),
     status: doc.status,
   })
 }
