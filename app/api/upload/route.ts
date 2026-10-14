@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { uploadFile } from '@/lib/cloudinary'
+import { assertStorageConfig, storageBucket, uploadBuffer } from '@/lib/storage'
+import { requireUser } from '@/lib/auth'
+import crypto from 'node:crypto'
 
 export async function POST(request: NextRequest) {
-  let uploadedFiles: Array<{ name: string; size: number; mimeType: string; url: string; publicId: string }> = []
-  
+  const denied = await requireUser()
+  if (denied) return denied
+
+  let files: File[]
   try {
-    const data = await request.json()
-    uploadedFiles = data.files || []
+    const form = await request.formData()
+    files = form.getAll('files').filter((value): value is File => value instanceof File)
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON data' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid multipart upload' }, { status: 400 })
   }
 
-  if (uploadedFiles.length === 0) {
+  if (files.length === 0) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 })
+  }
+
+  try { assertStorageConfig() } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Storage is not configured' }, { status: 500 })
   }
 
   const session = await prisma.session.create({
@@ -21,15 +29,21 @@ export async function POST(request: NextRequest) {
   })
 
   try {
-    for (const file of uploadedFiles) {
+    for (const file of files) {
+      const documentId = crypto.randomUUID()
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'upload'
+      const key = `documents/${documentId}/${safeName}`
+      await uploadBuffer(Buffer.from(await file.arrayBuffer()), key, file.type || 'application/octet-stream')
       await prisma.document.create({
         data: {
+          id: documentId,
           sessionId: session.id,
           name: file.name,
           size: file.size,
-          mimeType: file.mimeType || 'application/octet-stream',
-          cloudinaryUrl: file.url,
-          cloudinaryPublicId: file.publicId,
+          mimeType: file.type || 'application/octet-stream',
+          s3Bucket: storageBucket(),
+          s3Key: key,
+          s3Url: key,
           status: 'UPLOADED',
         },
       })
