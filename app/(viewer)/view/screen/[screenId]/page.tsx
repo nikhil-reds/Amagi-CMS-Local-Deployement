@@ -1,6 +1,8 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import ScreenPlayer from './ScreenPlayer'
+import { assetUrl } from '@/lib/asset-url'
+import { screenIdentifierWhere } from '@/lib/screen-code'
 
 export default async function ScreenViewerPage({
   params,
@@ -12,7 +14,7 @@ export default async function ScreenViewerPage({
   const { screenId } = await params
   const kiosk = (await searchParams).kiosk === '1'
   const screen = await prisma.screen.findUnique({
-    where: { id: screenId },
+    where: screenIdentifierWhere(screenId),
     include: {
       assets: {
         orderBy: { position: 'asc' },
@@ -22,18 +24,22 @@ export default async function ScreenViewerPage({
   })
 
   if (!screen) notFound()
+  if (screenId !== screen.code) {
+    const suffix = kiosk ? '?kiosk=1' : ''
+    redirect(`/view/screen/${screen.code}${suffix}`)
+  }
 
-  const assets = screen.assets.map((asset) => ({
+  const assets = await Promise.all(screen.assets.map(async (asset) => ({
     id: asset.id,
     document: {
       id: asset.document.id,
       name: asset.document.name,
       mimeType: asset.document.mimeType,
-      s3Url: asset.document.cloudinaryUrl || asset.document.websiteUrl || '',
+      s3Url: await assetUrl(asset.document),
       websiteUrl: asset.document.websiteUrl,
       sourceType: asset.document.sourceType,
     },
-  }))
+  })))
 
   return <ScreenPlayer screenName={screen.name} assets={assets} kiosk={kiosk} />
 }
