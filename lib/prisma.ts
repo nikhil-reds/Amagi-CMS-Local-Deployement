@@ -6,14 +6,14 @@ const globalForPrisma = global as unknown as {
   prismaSchemaVersion?: string
 }
 
-const PRISMA_SCHEMA_VERSION = '20261001120000_add_auth'
+const PRISMA_SCHEMA_VERSION = '20261015000000_add_user_roles'
 
 if (
   globalForPrisma.prisma &&
   globalForPrisma.prismaSchemaVersion !== PRISMA_SCHEMA_VERSION
 ) {
   // Force a fresh client after schema changes during Next.js dev hot reload.
-  delete (globalForPrisma as any).prisma
+  globalForPrisma.prisma = undefined
 }
 
 function createClient() {
