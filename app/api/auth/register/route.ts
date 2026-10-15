@@ -30,8 +30,9 @@ export async function POST(request: NextRequest) {
     }
 
     const isFirstUser = (await prisma.user.count()) === 0
-    if (!isFirstUser && !(await getCurrentUser())) {
-      return NextResponse.json({ error: 'Only signed-in users can create accounts' }, { status: 403 })
+    const currentUser = await getCurrentUser()
+    if (!isFirstUser && currentUser?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Only administrators can create accounts' }, { status: 403 })
     }
 
     if (await prisma.user.findUnique({ where: { email } })) {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await prisma.user.create({
-      data: { name, email, passwordHash: await hashPassword(password) },
+      data: { name, email, passwordHash: await hashPassword(password), role: isFirstUser ? 'ADMIN' : 'EDITOR' },
     })
 
     if (isFirstUser) await createSession(user.id, request, true)
