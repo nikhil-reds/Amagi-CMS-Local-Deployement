@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { assertStorageConfig, storageBucket, uploadBuffer } from '@/lib/storage'
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import crypto from 'node:crypto'
 
 export async function POST(request: NextRequest) {
-  const denied = await requireUser()
+  const denied = await requireRole('ADMIN', 'EDITOR')
   if (denied) return denied
 
   let files: File[]
