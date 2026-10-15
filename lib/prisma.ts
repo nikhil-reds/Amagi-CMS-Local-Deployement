@@ -6,7 +6,7 @@ const globalForPrisma = global as unknown as {
   prismaSchemaVersion?: string
 }
 
-const PRISMA_SCHEMA_VERSION = '20261015000000_add_user_roles'
+const PRISMA_SCHEMA_VERSION = '20261015000001_add_screen_playlists'
 
 if (
   globalForPrisma.prisma &&
