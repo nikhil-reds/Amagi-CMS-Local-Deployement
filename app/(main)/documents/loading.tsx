@@ -3,7 +3,7 @@ import { FileIcon, Search, Upload } from 'lucide-react'
 
 export default function DocumentsLoading() {
   return (
-    <div className="bg-[linear-gradient(to_top,#0a1f5c_0%,#1d4ed8_22%,#5cc8e0_52%,#d6f4fa_78%,#ffffff_100%)] min-h-screen py-10 px-8 flex flex-col gap-8 antialiased">
+    <div className="bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] min-h-screen py-10 px-8 flex flex-col gap-8 antialiased">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-100 pb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Documents</h1>
