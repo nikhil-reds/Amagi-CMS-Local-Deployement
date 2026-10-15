@@ -370,7 +370,7 @@ function ensureInstalled() {
       fs.renameSync(`${target}.tmp`, target)
     }
 
-    const options = { target, cwd: installDir, icon: target, iconIndex: 0, description: 'XOS', appUserModelId: 'com.trfastenings.screenplayer' }
+    const options = { target, cwd: installDir, icon: target, iconIndex: 0, description: 'Amagi Screen Player', appUserModelId: 'com.amagi.screenplayer' }
     const links = [
       path.join(app.getPath('desktop'), 'XOS.lnk'),
       path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'XOS.lnk'),
@@ -477,7 +477,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     // No application menu, so its default Reload (Ctrl+R) accelerator does not exist.
     // Same id as the shortcuts, so a pinned shortcut and the running window share one taskbar icon.
-    app.setAppUserModelId('com.trfastenings.screenplayer')
+    app.setAppUserModelId('com.amagi.screenplayer')
     Menu.setApplicationMenu(null)
     createWindow()
     // Keep first paint responsive; shortcut maintenance can happen after the player opens.
