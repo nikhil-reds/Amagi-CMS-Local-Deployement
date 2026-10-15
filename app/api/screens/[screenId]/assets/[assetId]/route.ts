@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { publishScreenChanged } from '@/lib/realtime'
 import { screenIdentifierWhere } from '@/lib/screen-code'
 
@@ -8,7 +8,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ screenId: string; assetId: string }> }
 ) {
-  const denied = await requireUser()
+  const denied = await requireRole('ADMIN', 'EDITOR')
   if (denied) return denied
 
   try {
