@@ -100,7 +100,8 @@ model ScreenAsset {
   screen   Screen   @relation(fields: [screenId], references: [id], onDelete: Cascade)
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  @@unique([screenId])
+  @@unique([screenId, documentId])
+  @@index([screenId, position])
   @@index([documentId])
 }
 
