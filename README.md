@@ -1,4 +1,4 @@
-# TR Fastenings Multimedia
+# Amagi Multimedia
 
 A media management platform for uploading, organizing, and viewing documents, images, and videos. Files are stored in AWS S3, sessions group uploads, and the viewer renders content by MIME type.
 
@@ -298,17 +298,17 @@ An Electron kiosk app that plays a screen's assigned content full screen on a Wi
 | `Ctrl + Shift + Q` | Quits the player |
 
 - The app checks the CMS every 30 seconds and reloads when the screen's assigned asset changes. If the page fails to load, it retries every 10 seconds.
-- The last server and Screen ID are saved in `%APPDATA%\TR Fastenings Screen Player\config.json`.
+- The last server and Screen ID are saved in `%APPDATA%\Amagi Screen Player\config.json`.
 - The default server address is `http://localhost:3000`. The player stores only the CMS base address; do not enter `/view/screen` or `/api`. For another computer, use the CMS host's LAN address, such as `http://192.168.1.25:3000`.
 
 ```bash
 cd desktop
 npm install
 npm start      # run locally
-npm run dist   # build desktop/dist/TRFasteningsScreenPlayer-<version>.exe
+npm run dist   # build desktop/dist/AmagiScreenPlayer-<version>.exe
 ```
 
-**CI:** `.github/workflows/build-desktop.yml` runs on every push to `main`. It builds the portable `.exe` on `windows-latest` and uploads it as the `TRFasteningsScreenPlayer-windows` artifact. To download it, open the run under the repo's **Actions** tab.
+**CI:** `.github/workflows/build-desktop.yml` runs on every push to `main`. It builds the portable `.exe` on `windows-latest` and uploads it as the `AmagiScreenPlayer-windows` artifact. To download it, open the run under the repo's **Actions** tab.
 
 ### Local realtime deployment
 
