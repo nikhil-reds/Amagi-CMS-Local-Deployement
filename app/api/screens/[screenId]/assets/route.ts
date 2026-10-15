@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth'
 import { publishScreenChanged } from '@/lib/realtime'
 import { assetUrl } from '@/lib/asset-url'
 import { screenIdentifierWhere } from '@/lib/screen-code'
+import { MAX_ASSETS_PER_SCREEN } from '@/lib/screen-assets'
 
 export async function GET(
   _request: NextRequest,
@@ -58,22 +59,35 @@ export async function POST(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    const asset = await prisma.screenAsset.upsert({
-      where: {
-        screenId: screen.id,
-      },
-      update: {
-        documentId: body.documentId,
-        position: 0,
-        updatedAt: new Date(),
-      },
-      create: {
-        screenId: screen.id,
-        documentId: body.documentId,
-        position: 0,
-      },
+    const existing = await prisma.screenAsset.findUnique({
+      where: { screenId_documentId: { screenId: screen.id, documentId: document.id } },
       include: { document: true },
     })
+    if (existing) return NextResponse.json(existing)
+
+    const asset = await prisma.$transaction(async (tx) => {
+      const assetCount = await tx.screenAsset.count({ where: { screenId: screen.id } })
+      if (assetCount >= MAX_ASSETS_PER_SCREEN) return null
+
+      const lastAsset = await tx.screenAsset.findFirst({
+        where: { screenId: screen.id },
+        orderBy: { position: 'desc' },
+        select: { position: true },
+      })
+
+      return tx.screenAsset.create({
+        data: {
+          screenId: screen.id,
+          documentId: document.id,
+          position: (lastAsset?.position ?? -1) + 1,
+        },
+        include: { document: true },
+      })
+    })
+
+    if (!asset) {
+      return NextResponse.json({ error: `A screen can contain up to ${MAX_ASSETS_PER_SCREEN} items` }, { status: 400 })
+    }
 
     await publishScreenChanged(screenId)
     return NextResponse.json(asset, { status: 201 })
