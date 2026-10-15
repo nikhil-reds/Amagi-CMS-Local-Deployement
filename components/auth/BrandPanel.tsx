@@ -12,9 +12,9 @@ const highlights = [
 export default function BrandPanel() {
   return (
     <div className="relative hidden p-4 lg:block">
-      <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-[linear-gradient(160deg,#012d74_0%,#0a1f5c_45%,#1d4ed8_100%)] p-10 text-white shadow-2xl shadow-blue-950/30">
+      <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-[linear-gradient(160deg,#000f93_0%,#0a0f34_45%,#1863dc_100%)] p-10 text-white shadow-2xl shadow-blue-950/30">
         {/* Soft sea-blue glows */}
-        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-[#5cc8e0]/30 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-[#6e6eff]/30 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-20 size-96 rounded-full bg-sky-400/20 blur-3xl" />
         {/* Subtle grid */}
         <div
@@ -35,7 +35,7 @@ export default function BrandPanel() {
             <h2 className="text-4xl font-bold leading-tight tracking-tight">
               Every screen,
               <br />
-              <span className="bg-gradient-to-r from-[#7fdcf0] to-white bg-clip-text text-transparent">one console.</span>
+              <span className="bg-gradient-to-r from-[#aaaaf5] to-white bg-clip-text text-transparent">one console.</span>
             </h2>
             <p className="text-sm leading-relaxed text-sky-100/70">
               Manage what plays on each of your displays from a single place.
@@ -45,7 +45,7 @@ export default function BrandPanel() {
             {highlights.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur">
-                  <Icon className="size-4 text-[#7fdcf0]" />
+                  <Icon className="size-4 text-[#aaaaf5]" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold">{title}</p>
@@ -71,7 +71,7 @@ function ScreenMockup() {
           key={index}
           className={`aspect-video rounded-lg ${
             index === 1
-              ? "bg-gradient-to-br from-[#5cc8e0] to-[#1d4ed8] shadow-lg shadow-sky-500/30"
+              ? "bg-gradient-to-br from-[#6e6eff] to-[#1863dc] shadow-lg shadow-sky-500/30"
               : index === 3
                 ? "bg-gradient-to-br from-white/40 to-white/15"
                 : "bg-white/10"
