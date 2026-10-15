@@ -181,7 +181,7 @@ export default function UsersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7fa] px-5 py-7 sm:px-8 lg:px-10">
+    <main className="min-h-screen bg-[#f5f7fa] px-4 py-5 sm:px-8 sm:py-7 lg:px-10">
       <div className="mx-auto max-w-[1440px]">
         <section className="mb-7 flex flex-col gap-5 border-b border-[#e4e8ee] pb-7 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -189,7 +189,7 @@ export default function UsersPage() {
             <h1 className="text-3xl font-semibold tracking-[-0.035em] text-[#111827]">Users</h1>
             <p className="mt-2 text-sm text-[#6b7280]">Manage who can access the Amagi Multimedia workspace.</p>
           </div>
-          <Button onClick={() => setIsAddOpen(true)} className="h-10 gap-2 rounded-lg bg-[#16125e] px-5 text-sm font-semibold hover:bg-[#0f0c49]">
+          <Button onClick={() => setIsAddOpen(true)} className="h-11 w-full gap-2 rounded-lg bg-[#16125e] px-5 text-sm font-semibold hover:bg-[#0f0c49] sm:h-10 sm:w-auto">
             <Plus className="size-4" />
             Add user
           </Button>
@@ -213,7 +213,7 @@ export default function UsersPage() {
             </label>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[800px] text-left">
               <thead className="bg-[#fafbfc] text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d8795]">
                 <tr>
@@ -265,6 +265,31 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="divide-y divide-[#edf0f4] md:hidden">
+            {isLoading ? (
+              <p className="px-5 py-12 text-center text-sm text-[#7b8492]">Loading workspace members…</p>
+            ) : visibleUsers.length === 0 ? (
+              <p className="px-5 py-12 text-center text-sm text-[#7b8492]">No users match your search.</p>
+            ) : visibleUsers.map((user) => (
+              <article key={user.id} className="space-y-4 px-5 py-5">
+                <div className="flex items-start gap-3">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#eae7fb] text-xs font-bold text-[#42318f]">{initials(user.name)}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#1e2939]">{user.name}</p>
+                    <p className="mt-1 flex min-w-0 items-center gap-1.5 truncate text-xs text-[#7c8797]"><Mail className="size-3 shrink-0" />{user.email}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div><p className="mb-1 text-[#8a93a0]">Role</p><label className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold ${roleClass(user.role)}`}><select value={user.role} onChange={(event) => void updateUser(user.id, { role: event.target.value as Role })} className="appearance-none bg-transparent pr-1 outline-none">{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select><ChevronDown className="size-3 opacity-70" /></label></div>
+                  <div><p className="mb-1 text-[#8a93a0]">Last active</p><p className="font-medium text-[#566275]">{formatDate(user.lastLoginAt)}</p></div>
+                </div>
+                <div className="flex gap-2 border-t border-[#eef1f4] pt-3">
+                  <Button variant="outline" onClick={() => void resetPassword(user)} className="h-9 flex-1 gap-1.5 border-[#dfe4eb] text-xs text-[#445064]"><KeyRound className="size-3.5" />Reset password</Button>
+                  <Button variant="outline" onClick={() => void removeUser(user)} className="h-9 flex-1 gap-1.5 border-[#f3c8cd] text-xs text-[#c8293b] hover:bg-[#fff0f1]"><Trash2 className="size-3.5" />Remove</Button>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       </div>
