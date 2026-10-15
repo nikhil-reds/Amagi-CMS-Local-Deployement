@@ -14,6 +14,7 @@ import {
   type TouchHoverDetail,
 } from './touch-drag'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { MAX_ASSETS_PER_SCREEN } from '@/lib/screen-assets'
 
 type DocumentAsset = {
   id: string
@@ -215,6 +216,12 @@ export default function ScreenPanel() {
   }
 
   async function assignAsset(screenId: string, document: DocumentAsset) {
+    const targetScreen = screens.find((screen) => screen.id === screenId)
+    if ((targetScreen?.assets?.length ?? 0) >= MAX_ASSETS_PER_SCREEN) {
+      toast.error(`A screen can contain up to ${MAX_ASSETS_PER_SCREEN} items`)
+      return
+    }
+
     setAssigningId(screenId)
     try {
       const res = await fetch(`/api/screens/${screenId}/assets`, {
@@ -232,9 +239,11 @@ export default function ScreenPanel() {
       const asset = await res.json()
       setScreens((prev) => prev.map((screen) => {
         if (screen.id !== screenId) return screen
-        return { ...screen, assets: [asset] }
+        const assets = screen.assets || []
+        if (assets.some((item) => item.id === asset.id)) return screen
+        return { ...screen, assets: [...assets, asset].sort((a, b) => a.position - b.position) }
       }))
-      toast.success(`Assigned "${document.name}" to screen`)
+      toast.success(`Added "${document.name}" to screen`)
     } catch {
       toast.error('Failed to assign asset')
     } finally {
@@ -356,10 +365,10 @@ export default function ScreenPanel() {
       return
     }
 
-    // 2. A file (photo, video, PDF…) dragged from the computer. One asset per screen.
+    // 2. A file (photo, video, PDF…) dragged from the computer.
     const file = dataTransfer.files[0]
     if (file) {
-      if (dataTransfer.files.length > 1) toast.info('A screen shows one asset — using the first file')
+      if (dataTransfer.files.length > 1) toast.info('Drop files one at a time to choose their order')
       assignFile(screenId, file)
       return
     }
@@ -404,7 +413,8 @@ export default function ScreenPanel() {
           <div className="flex gap-3 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-1 md:overflow-visible md:pb-0 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 md:gap-4 lg:gap-5" data-autoscroll>
             {screens.map((screen) => {
               const assets = screen.assets || []
-              const latestAsset = assets[0]
+              const primaryAsset = assets[0]
+              const isFull = assets.length >= MAX_ASSETS_PER_SCREEN
               const isActiveDrop = dragOverId === screen.id
 
               return (
@@ -428,8 +438,8 @@ export default function ScreenPanel() {
                   }`}
                 >
                   <div className="absolute inset-0">
-                    {latestAsset ? (
-                      <AssetPreview key={latestAsset.id + latestAsset.documentId} document={latestAsset.document} />
+                    {primaryAsset ? (
+                      <AssetPreview key={primaryAsset.id + primaryAsset.documentId} document={primaryAsset.document} />
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-gray-400 dark:text-zinc-500">
                         <Monitor className="size-12" />
@@ -442,15 +452,16 @@ export default function ScreenPanel() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-zinc-950 dark:text-zinc-100">{screen.name}</p>
                       <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                        {latestAsset ? '1 asset assigned' : 'No asset assigned'}
+                        {assets.length ? `${assets.length} of ${MAX_ASSETS_PER_SCREEN} items assigned` : 'No items assigned'}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1 max-sm:justify-end">
                       <button
                         onClick={() => setAddTargetId(screen.id)}
-                        className="flex size-9 md:size-8 items-center justify-center rounded-lg bg-white/90 dark:bg-zinc-800/90 text-zinc-500 dark:text-zinc-400 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 transition hover:text-black dark:hover:text-white"
+                        disabled={isFull}
+                        className="flex size-9 md:size-8 items-center justify-center rounded-lg bg-white/90 dark:bg-zinc-800/90 text-zinc-500 dark:text-zinc-400 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-45 dark:hover:text-white"
                         aria-label={`Add a file or link to ${screen.name}`}
-                        title="Add file or link"
+                        title={isFull ? `Maximum of ${MAX_ASSETS_PER_SCREEN} items reached` : 'Add file or link'}
                       >
                         <Plus className="size-4" />
                       </button>
@@ -475,7 +486,7 @@ export default function ScreenPanel() {
 
                   {isActiveDrop ? (
                     <div className="absolute inset-3 flex items-center justify-center rounded-xl border-2 border-dashed border-black dark:border-white bg-white/80 dark:bg-zinc-900/80 text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                      Drop to assign
+                      {isFull ? `Maximum of ${MAX_ASSETS_PER_SCREEN} items reached` : 'Drop to add'}
                     </div>
                   ) : null}
 
@@ -485,24 +496,22 @@ export default function ScreenPanel() {
                     </div>
                   ) : null}
 
-                  {latestAsset ? (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-black/0 p-2.5 pt-10 sm:p-4 sm:pt-12">
-                      <div className="flex items-end justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-white">{latestAsset.document.name}</p>
-                          <p className="mt-0.5 text-[10px] font-medium uppercase text-white/60">
-                            {latestAsset.document.mimeType === 'text/uri-list' ? 'Website' : latestAsset.document.mimeType}
-                          </p>
+                  {assets.length > 0 ? (
+                    <div className="absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/85 via-black/65 to-transparent p-2.5 pt-12 sm:p-4 sm:pt-14">
+                      {assets.map((asset, index) => (
+                        <div key={asset.id} className="flex items-center gap-2 rounded-md bg-black/20 px-1.5 py-1 text-white">
+                          <span className="grid size-4 shrink-0 place-items-center rounded-full bg-white/20 text-[9px] font-bold">{index + 1}</span>
+                          <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-semibold">{asset.document.name}</p></div>
+                          <button
+                            onClick={() => removeAsset(screen.id, asset.id)}
+                            className="flex size-6 shrink-0 items-center justify-center rounded-md text-white/80 transition hover:bg-white/20 hover:text-white"
+                            aria-label={`Remove ${asset.document.name}`}
+                            title="Remove assigned item"
+                          >
+                            <X className="size-3.5" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => removeAsset(screen.id, latestAsset.id)}
-                          className="flex size-8 md:size-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white/25"
-                          aria-label={`Remove ${latestAsset.document.name}`}
-                          title="Remove assigned asset"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   ) : null}
                 </div>
@@ -526,17 +535,16 @@ export default function ScreenPanel() {
               screens.map((screen) => (
                 <button
                   key={screen.id}
+                  disabled={(screen.assets?.length ?? 0) >= MAX_ASSETS_PER_SCREEN}
                   onClick={() => {
                     if (pickDocument) assignAsset(screen.id, pickDocument)
                     setPickDocument(null)
                   }}
-                  className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-zinc-200 px-4 text-left text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-zinc-200 px-4 text-left text-sm font-semibold transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-45 dark:border-zinc-800 dark:hover:bg-zinc-900"
                 >
                   <Monitor className="size-4 shrink-0 text-zinc-500" />
                   <span className="min-w-0 flex-1 truncate">{screen.name}</span>
-                  <span className="shrink-0 text-xs font-medium text-zinc-400">
-                    {screen.assets?.[0] ? 'Replace asset' : 'Empty'}
-                  </span>
+                  <span className="shrink-0 text-xs font-medium text-zinc-400">{screen.assets?.length ?? 0} / {MAX_ASSETS_PER_SCREEN}</span>
                 </button>
               ))
             )}
