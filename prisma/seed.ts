@@ -33,11 +33,13 @@ async function main() {
       where: { email },
       update: {
         name: "Amagi Admin",
+        role: "ADMIN",
         passwordHash: await hashPassword(password),
       },
       create: {
         name: "Amagi Admin",
         email,
+        role: "ADMIN",
         passwordHash: await hashPassword(password),
       },
     })
