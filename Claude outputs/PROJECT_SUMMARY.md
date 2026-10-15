@@ -1,7 +1,7 @@
-# TR Fastenings Multimedia Platform — Project Summary
+# Amagi Multimedia Platform — Project Summary
 
 ## Overview
-**TR Fastenings Multimedia** is a Next.js-based media management platform designed for uploading, organizing, and viewing documents, images, and videos. Files are stored in AWS S3, sessions group uploads, and a universal viewer renders content by MIME type.
+**Amagi Multimedia** is a Next.js-based media management platform designed for uploading, organizing, and viewing documents, images, and videos. Files are stored in AWS S3, sessions group uploads, and a universal viewer renders content by MIME type.
 
 **Purpose**: Enable users to upload media files, organize them into playlists, and assign playlists to multiple screens for digital display/signage.
 
@@ -527,7 +527,7 @@ AWS_REGION=ap-south-1
 
 ## Summary
 
-**TR Fastenings Multimedia** is a production-ready media management system that:
+**Amagi Multimedia** is a production-ready media management system that:
 1. **Ingests** files via drag-drop upload
 2. **Stores** files in AWS S3 with metadata in PostgreSQL
 3. **Organizes** content into playlists with configurable looping
