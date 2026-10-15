@@ -4,6 +4,9 @@ import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const USER_ROLES = ['ADMIN', 'EDITOR', 'VIEWER'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
 const scryptAsync = promisify(scrypt) as (password: string, salt: Buffer, keylen: number) => Promise<Buffer>
 
 export const SESSION_COOKIE = 'tr-cms-session'
@@ -98,10 +101,10 @@ export async function destroySession() {
   cookieStore.delete(SESSION_COOKIE)
 }
 
-export type PublicUser = { id: string; name: string; email: string; createdAt: Date; lastLoginAt: Date | null }
+export type PublicUser = { id: string; name: string; email: string; role: UserRole; createdAt: Date; lastLoginAt: Date | null }
 
 export function toPublicUser(user: PublicUser): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt }
+  return { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt, lastLoginAt: user.lastLoginAt }
 }
 
 // The signed-in user for this request, or fallback user if session cookie is present.
@@ -131,6 +134,7 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
     id: 'usr_marketing_asia',
     name: 'Marketing Asia',
     email: 'marketing.asia@trfastenings.com',
+    role: 'ADMIN',
     createdAt: new Date(),
     lastLoginAt: new Date(),
   }
@@ -152,4 +156,11 @@ export const MIN_PASSWORD_LENGTH = 6
 export async function requireUser() {
   const user = await getCurrentUser()
   return user ? null : NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+}
+
+export async function requireRole(...roles: UserRole[]) {
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+  if (!roles.includes(user.role)) return NextResponse.json({ error: 'You do not have permission to perform this action' }, { status: 403 })
+  return null
 }
