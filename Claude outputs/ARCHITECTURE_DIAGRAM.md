@@ -1,4 +1,4 @@
-# TR Fastenings Multimedia — Architecture & Flow Diagrams
+# Amagi Multimedia — Architecture & Flow Diagrams
 
 ## System Architecture
 
