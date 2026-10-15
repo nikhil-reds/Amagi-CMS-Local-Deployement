@@ -12,7 +12,7 @@ export default function Navbar({ menuControl }: NavbarProps) {
       <div className="flex min-w-0 items-center gap-3">
         {menuControl}
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-zinc-950 dark:text-zinc-50">TR Fastenings Multimedia</p>
+          <p className="truncate text-sm font-bold text-zinc-950 dark:text-zinc-50">Amagi Multimedia</p>
           <p className="hidden truncate text-xs font-medium text-zinc-500 dark:text-zinc-400 sm:block">
             Streaming media management
           </p>
