@@ -325,6 +325,6 @@ Replace `YOUR-LAN-IP` in `desktop/build-config.json` with the computer's LAN add
 
 ### Local file storage
 
-Uploaded files are stored in MinIO. The MinIO console is available at `http://YOUR-LAN-IP:9001`, and the S3-compatible API is available at `http://YOUR-LAN-IP:9000`. Set the `MINIO_*` variables in `.env` before starting Docker. New uploads use `/api/upload` and are returned through short-lived presigned URLs; the Electron player never receives MinIO credentials.
+Uploaded files are stored in SeaweedFS through its S3-compatible API. The SeaweedFS filer UI is available at `http://YOUR-LAN-IP:9001`, and the S3-compatible API is available at `http://YOUR-LAN-IP:9000`. Set the `MINIO_*` compatibility variables in `.env` before starting Docker. New uploads use `/api/upload` and are returned through short-lived presigned URLs; the Electron player never receives storage credentials.
 
-PostgreSQL is local as well. The host connection is `postgresql://postgres:postgres@localhost:5432/multimedia`; containers use the internal `db` hostname. Data persists in the `postgres_data` Docker volume.
+PostgreSQL is local as well. The host connection is `postgresql://postgres:postgres@localhost:5433/multimedia`; containers use the internal `db` hostname. Data persists in the `postgres_data` Docker volume.
