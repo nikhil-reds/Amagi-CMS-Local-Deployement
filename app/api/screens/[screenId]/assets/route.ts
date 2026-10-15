@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { publishScreenChanged } from '@/lib/realtime'
 import { assetUrl } from '@/lib/asset-url'
 import { screenIdentifierWhere } from '@/lib/screen-code'
@@ -34,7 +34,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ screenId: string }> }
 ) {
-  const denied = await requireUser()
+  const denied = await requireRole('ADMIN', 'EDITOR')
   if (denied) return denied
 
   try {
