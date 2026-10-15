@@ -56,7 +56,7 @@ export default function BrandPanel() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-sky-100/50">© {new Date().getFullYear()} TR Fastenings. All rights reserved.</p>
+        <p className="relative text-xs text-sky-100/50">© {new Date().getFullYear()} Amagi. All rights reserved.</p>
       </div>
     </div>
   )
