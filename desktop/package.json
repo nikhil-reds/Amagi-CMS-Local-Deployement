@@ -1,11 +1,11 @@
 {
-  "name": "tr-fastenings-screen-player",
-  "productName": "XOS",
+  "name": "amagi-screen-player",
+  "productName": "Amagi Screen Player",
   "version": "1.0.0",
-  "description": "Full-screen kiosk player that shows the content assigned to a TR Fastenings Multimedia screen.",
+  "description": "Full-screen kiosk player that shows the content assigned to an Amagi Multimedia screen.",
   "main": "main.js",
   "private": true,
-  "author": "TR Fastenings",
+  "author": "Amagi",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win portable --x64 --publish never"
@@ -15,8 +15,8 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.trfastenings.screenplayer",
-    "productName": "XOS",
+    "appId": "com.amagi.screenplayer",
+    "productName": "Amagi Screen Player",
     "directories": {
       "output": "dist"
     },
@@ -32,7 +32,7 @@
     "win": {
       "icon": "icon.ico",
       "target": "portable",
-      "artifactName": "XOS-${version}.exe"
+      "artifactName": "AmagiScreenPlayer-${version}.exe"
     }
   },
   "dependencies": {
