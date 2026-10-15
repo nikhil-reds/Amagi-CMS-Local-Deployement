@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Authorized team members / user accounts for TR Fastenings Multimedia CMS
+// Authorized team members / user accounts for Amagi Multimedia CMS
 const SESSION_COOKIE = 'tr-cms-session'
 
 // Next.js 16 Proxy Middleware convention (replaces legacy middleware.ts)
