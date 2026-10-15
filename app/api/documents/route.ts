@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { assetUrl } from '@/lib/asset-url'
+import { requireRole } from '@/lib/auth'
 
 // Links that point straight at an image or video are stored with that media type
 // so screens render them as media instead of as a web page.
@@ -42,6 +43,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireRole('ADMIN', 'EDITOR')
+  if (denied) return denied
+
   try {
     const body = await request.json() as { url?: string; name?: string }
     const rawUrl = body.url?.trim()
@@ -89,6 +93,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const denied = await requireRole('ADMIN', 'EDITOR')
+  if (denied) return denied
+
   try {
     const { ids } = await request.json() as { ids: string[] }
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
