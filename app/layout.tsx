@@ -19,8 +19,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "TR Fastenings Multimedia",
-  description: "TR Fastenings Multimedia — your platform for managing and viewing media documents.",
+  title: "Amagi Multimedia",
+  description: "Amagi Multimedia — your platform for managing and viewing media documents.",
 };
 
 import { Toaster } from "@/components/ui/sonner"
