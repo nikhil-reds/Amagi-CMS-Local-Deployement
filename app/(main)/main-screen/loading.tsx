@@ -5,7 +5,7 @@ import { DocumentListSkeleton, ScreenGridSkeleton } from '@/components/main-scre
 export default function MainScreenLoading() {
   return (
     <div
-      className="bg-[linear-gradient(to_top,#0a1f5c_0%,#1d4ed8_22%,#5cc8e0_52%,#d6f4fa_78%,#ffffff_100%)] flex gap-5 px-6 py-6 overflow-hidden"
+      className="bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] flex gap-5 px-6 py-6 overflow-hidden"
       style={{ height: 'calc(100vh - 64px)' }}
     >
       <aside className="w-80 shrink-0 rounded-2xl bg-white/85 backdrop-blur-md border border-white/70 shadow-lg shadow-blue-950/10 flex flex-col overflow-hidden">
