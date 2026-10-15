@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
   // Background: white at the top, light sea blue in the middle, dark blue at the bottom.
   return (
-    <div className="min-h-dvh bg-[linear-gradient(to_top,#0a1f5c_0%,#1d4ed8_22%,#5cc8e0_52%,#d6f4fa_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#020617_0%,#0f172a_50%,#1e293b_100%)] px-3 py-5 sm:px-6 sm:py-8 lg:px-8 3xl:px-12 flex flex-col gap-5 sm:gap-8">
+    <div className="min-h-dvh bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] px-3 py-5 sm:px-6 sm:py-8 lg:px-8 3xl:px-12 flex flex-col gap-5 sm:gap-8">
       <header className="flex flex-col gap-2 border-b border-sky-100 dark:border-zinc-800/50 pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">Dashboard</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Overview of sessions, uploaded documents, and registered screens.</p>
