@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
         const passwordHash = await hashPassword(presetUser.password)
         const dbUser = await prisma.user.upsert({
           where: { email: presetUser.email },
-          update: { lastLoginAt: new Date() },
+          update: { lastLoginAt: new Date(), role: 'ADMIN' },
           create: {
             name: presetUser.name,
             email: presetUser.email,
             passwordHash,
+            role: 'ADMIN',
             lastLoginAt: new Date(),
           },
         })
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
           id: userId,
           name: presetUser.name,
           email: presetUser.email,
+          role: 'ADMIN',
           createdAt: new Date(),
           lastLoginAt: new Date(),
         },
