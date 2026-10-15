@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Monitor,
   Tv,
+  Users,
 } from "lucide-react"
 
 import BrandLogo from "@/components/BrandLogo"
@@ -38,6 +39,12 @@ const navigationItems = [
     href: "/screens",
     icon: Monitor,
     matcher: (pathname: string) => pathname.startsWith("/screens"),
+  },
+  {
+    label: "Users",
+    href: "/users",
+    icon: Users,
+    matcher: (pathname: string) => pathname.startsWith("/users"),
   },
 ]
 
