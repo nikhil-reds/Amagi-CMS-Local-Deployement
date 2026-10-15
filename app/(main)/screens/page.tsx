@@ -174,7 +174,7 @@ export default function ScreensDashboard() {
 
   // Background: white at the top, light sea blue in the middle, dark blue at the bottom.
   return (
-    <div className="bg-[linear-gradient(to_top,#0a1f5c_0%,#1d4ed8_22%,#5cc8e0_52%,#d6f4fa_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#020617_0%,#0f172a_50%,#1e293b_100%)] min-h-dvh px-3 py-5 sm:px-5 sm:py-8 lg:px-8 lg:py-10 3xl:px-12 flex flex-col gap-8 antialiased">
+    <div className="bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] min-h-dvh px-3 py-5 sm:px-5 sm:py-8 lg:px-8 lg:py-10 3xl:px-12 flex flex-col gap-8 antialiased">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-100 dark:border-zinc-800 pb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Screens</h1>
