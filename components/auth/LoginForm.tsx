@@ -83,7 +83,7 @@ export default function LoginForm() {
         icon={Lock}
         error={errors.password}
         labelAction={
-          <Link href="#" className="text-xs font-semibold text-[#1d4ed8] transition hover:text-[#012d74]">
+          <Link href="#" className="text-xs font-semibold text-[#1863dc] transition hover:text-[#000f93]">
             Forgot password?
           </Link>
         }
@@ -105,12 +105,12 @@ export default function LoginForm() {
           type="checkbox"
           checked={remember}
           onChange={(event) => setRemember(event.target.checked)}
-          className="size-4 rounded border-slate-300 accent-[#1d4ed8]"
+          className="size-4 rounded border-slate-300 accent-[#1863dc]"
         />
         Keep me signed in
       </label>
 
-      <Button type="submit" disabled={submitting} className="h-12 w-full rounded-xl bg-[linear-gradient(135deg,#012d74_0%,#1d4ed8_100%)] text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition hover:brightness-110 hover:shadow-blue-900/35">
+      <Button type="submit" disabled={submitting} className="h-12 w-full rounded-xl bg-[linear-gradient(135deg,#000f93_0%,#1863dc_100%)] text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition hover:brightness-110 hover:shadow-blue-900/35">
         {submitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />
