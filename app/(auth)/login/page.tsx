@@ -5,7 +5,7 @@ import AuthLayout from "@/components/auth/AuthLayout"
 import LoginForm from "@/components/auth/LoginForm"
 
 export const metadata: Metadata = {
-  title: "Sign in · TR Fastenings Multimedia",
+  title: "Sign in · Amagi Multimedia",
 }
 
 export default function LoginPage() {
