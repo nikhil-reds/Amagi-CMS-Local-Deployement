@@ -881,7 +881,7 @@ function DocViewer({ src, name, mimeType }: { src: string; name: string; mimeTyp
       ? content.split('\n').map((row) => row.split(','))
       : [
           ['Product ID', 'Name', 'Qty', 'Unit Price', 'Total Sales'],
-          ['P001', 'TR Fastenings Ultra Cam', '15', '$299.00', '$4,485.00'],
+          ['P001', 'Amagi Ultra Cam', '15', '$299.00', '$4,485.00'],
           ['P002', 'High-res LED Screen Monitor', '8', '$549.00', '$4,392.00'],
           ['P003', 'Interactive Multi-Media Board', '3', '$1,899.00', '$5,697.00'],
           ['P004', 'Pro Audio Microphone Stand', '40', '$45.00', '$1,800.00'],
@@ -925,7 +925,7 @@ function DocViewer({ src, name, mimeType }: { src: string; name: string; mimeTyp
         <div className="w-full max-w-2xl bg-white text-zinc-800 rounded-xl shadow-2xl p-10 border border-zinc-200">
           <div className="border-b-2 border-zinc-800 pb-3 mb-6">
             <h1 className="text-2xl font-bold text-zinc-950">PROPOSAL SPECIFICATIONS</h1>
-            <p className="text-xs text-zinc-400 mt-1 uppercase font-semibold">TR Fastenings Multimedia Group</p>
+            <p className="text-xs text-zinc-400 mt-1 uppercase font-semibold">Amagi Multimedia Group</p>
           </div>
           <div className="space-y-4 text-sm leading-relaxed text-zinc-650">
             <p className="font-semibold text-zinc-900">1. Executive Summary</p>
@@ -959,7 +959,7 @@ function DocViewer({ src, name, mimeType }: { src: string; name: string; mimeTyp
           <div className="text-indigo-400 font-semibold text-xs tracking-wider uppercase">Slide 1: Overview</div>
           <div className="my-auto space-y-4">
             <h2 className="text-3xl font-extrabold text-white leading-tight">
-              TR Fastenings Media <br />
+              Amagi Media <br />
               <span className="text-indigo-400">&amp; Screen Delivery</span>
             </h2>
             <p className="text-xs text-indigo-200/70 max-w-md">
@@ -967,7 +967,7 @@ function DocViewer({ src, name, mimeType }: { src: string; name: string; mimeTyp
             </p>
           </div>
           <div className="border-t border-indigo-900/60 pt-3 flex items-center justify-between text-[10px] text-indigo-400 font-mono">
-            <span>TR FASTENINGS MULTIMEDIA</span>
+            <span>AMAGI MULTIMEDIA</span>
             <span>2026 Pitch Deck</span>
           </div>
         </div>
