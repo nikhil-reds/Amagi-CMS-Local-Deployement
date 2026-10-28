@@ -11,8 +11,10 @@ const scryptAsync = promisify(scrypt) as (
   keyLength: number,
 ) => Promise<Buffer>
 
-const email = process.env.SEED_USER_EMAIL ?? "admin@amagi.local"
-const password = process.env.SEED_USER_PASSWORD ?? "Amagi!2026Console"
+// Login normalizes email addresses to lowercase.
+const email = (process.env.SEED_USER_EMAIL ?? "Triptishakya@gmail.com").trim().toLowerCase()
+const password = process.env.SEED_USER_PASSWORD ?? "_6F5DIflvry9hCKXnQ6t!7a"
+const name = "Tripti Shakya"
 
 async function hashPassword(value: string) {
   const salt = randomBytes(16)
@@ -29,18 +31,19 @@ async function main() {
   })
 
   try {
+    const passwordHash = await hashPassword(password)
     const user = await prisma.user.upsert({
       where: { email },
       update: {
-        name: "Amagi Admin",
+        name,
         role: "ADMIN",
-        passwordHash: await hashPassword(password),
+        passwordHash,
       },
       create: {
-        name: "Amagi Admin",
+        name,
         email,
         role: "ADMIN",
-        passwordHash: await hashPassword(password),
+        passwordHash,
       },
     })
 
