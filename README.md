@@ -73,7 +73,7 @@ multi-media/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
-├── docker-compose.yaml
+├── docker-compose.yml
 └── next.config.ts
 ```
 
@@ -150,9 +150,9 @@ model Document {
 
 ### Prerequisites
 
-- Node.js 18+
-- Docker (for local PostgreSQL)
-- AWS S3 bucket
+- Node.js 22+
+- Docker Desktop (for PostgreSQL, SeaweedFS storage, and Centrifugo)
+- No AWS account is required for the local stack
 
 ### 1. Install dependencies
 
@@ -164,19 +164,16 @@ npm install
 
 Create a `.env` file in the project root:
 
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/multimedia
-
-AWS_ACCESS_KEY=your_access_key
-AWS_SECRET_KEY=your_secret_key
-BUCKET_NAME=your_bucket_name
-AWS_REGION=ap-south-1
+```bash
+cp .env.example .env
 ```
+
+Set unique values for MINIO_SECRET_KEY, CENTRIFUGO_API_KEY, and CENTRIFUGO_TOKEN_SECRET. The local .env uses PostgreSQL on localhost:5433. Docker Compose overrides internal service addresses automatically.
 
 ### 3. Start the database
 
 ```bash
-docker-compose up -d
+docker compose up -d db minio centrifugo
 ```
 
 ### 4. Run database migrations
@@ -197,7 +194,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Deploy Locally with Docker (Auto-starts on Reboot)
 
-This setup runs the full stack — Next.js app + PostgreSQL — in Docker containers that automatically restart whenever your system reboots or Docker restarts.
+This setup runs the full stack — Next.js, PostgreSQL, SeaweedFS, and Centrifugo — in Docker containers that automatically restart whenever your system reboots or Docker restarts.
 
 ### Prerequisites
 
@@ -213,16 +210,13 @@ This ensures Docker starts automatically every time Windows boots. All container
 
 ### Step 2 — Create your `.env` file
 
-```env
-DATABASE_URL=postgresql://postgres:postgres@db:5432/multimedia
-
-AWS_ACCESS_KEY=your_access_key
-AWS_SECRET_KEY=your_secret_key
-BUCKET_NAME=your_bucket_name
-AWS_REGION=ap-south-1
+```bash
+cp .env.example .env
 ```
 
-> Note: `DATABASE_URL` must point to `db` (the Docker service name), not `localhost`.
+Set unique values for MINIO_SECRET_KEY, CENTRIFUGO_API_KEY, and CENTRIFUGO_TOKEN_SECRET. The local .env uses PostgreSQL on localhost:5433. Docker Compose overrides internal service addresses automatically.
+
+> Keep the host DATABASE_URL from .env.example; Compose supplies db:5432 to the app container.
 
 ### Step 3 — Build and start everything
 
@@ -237,7 +231,7 @@ This will:
 
 ### Step 4 — Run database migrations
 
-Run this once after the first start (and after any future schema changes):
+Migrations run automatically at container startup. To run them manually:
 
 ```bash
 docker compose exec app npx prisma migrate deploy
@@ -328,3 +322,19 @@ Replace `YOUR-LAN-IP` in `desktop/build-config.json` with the computer's LAN add
 Uploaded files are stored in SeaweedFS through its S3-compatible API. The SeaweedFS filer UI is available at `http://YOUR-LAN-IP:9001`, and the S3-compatible API is available at `http://YOUR-LAN-IP:9000`. Set the `MINIO_*` compatibility variables in `.env` before starting Docker. New uploads use `/api/upload` and are returned through short-lived presigned URLs; the Electron player never receives storage credentials.
 
 PostgreSQL is local as well. The host connection is `postgresql://postgres:postgres@localhost:5433/multimedia`; containers use the internal `db` hostname. Data persists in the `postgres_data` Docker volume.
+
+### Local ports and environment
+
+| Service | Host port | Container port |
+|---|---|---|
+| CMS | `APP_PORT=3000` | `3000` |
+| PostgreSQL (localhost only) | `POSTGRES_PORT=5433` | `5432` |
+| Storage S3 API | `MINIO_API_PORT=9000` | `8333` |
+| Storage filer UI | `MINIO_CONSOLE_PORT=9001` | `8888` |
+| Centrifugo | `CENTRIFUGO_PORT=8000` | `8000` |
+
+For players on other devices, set `MINIO_PUBLIC_URL` to `http://<CMS-PC-LAN-IP>:9000` and `CENTRIFUGO_PUBLIC_URL` to `ws://<CMS-PC-LAN-IP>:8000/connection/websocket`. Use the configured host ports if you change them. The player server address is `http://<CMS-PC-LAN-IP>:3000`.
+
+For host development, start only the dependencies with `docker compose up -d db minio centrifugo`, then run `npm run dev`. `APP_PORT` controls Docker publishing; the development server defaults to 3000 (use `npm run dev -- --port 3001` to change it). Keep public URLs aligned with any host port changes.
+
+The local `.env` contains generated credentials and is ignored by Git and Docker builds. `.env.example` contains placeholders for new installations.
