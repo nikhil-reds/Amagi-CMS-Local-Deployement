@@ -10,8 +10,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
       S3_BUCKET: ${MINIO_BUCKET}
     ports:
-      - "9000:8333"
-      - "9001:8888"
+      - "${MINIO_API_PORT:-9000}:8333"
+      - "${MINIO_CONSOLE_PORT:-9001}:8888"
     volumes:
       - minio_data:/data
 
@@ -23,7 +23,7 @@ services:
       CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET}
       CENTRIFUGO_HTTP_API_KEY: ${CENTRIFUGO_API_KEY}
     ports:
-      - "8000:8000"
+      - "${CENTRIFUGO_PORT:-8000}:8000"
     volumes:
       - ./centrifugo:/centrifugo
 
@@ -38,7 +38,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: multimedia
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -54,17 +54,26 @@ services:
     restart: always
     # Listens on port 3000 on every network interface of the PC, so other devices on the WiFi can reach it.
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     env_file:
       - .env # MinIO, Centrifugo, and other service keys. DATABASE_URL is overridden below.
     environment:
       NODE_ENV: production
+      PORT: "3000"
       DATABASE_URL: postgresql://postgres:postgres@db:5432/multimedia
+      MINIO_ENDPOINT: http://minio:8333
+      CENTRIFUGO_HTTP_URL: http://centrifugo:8000
       # Plain http://<LAN-IP> cannot store Secure cookies, so login would fail without this.
       COOKIE_SECURE: "false"
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_started
+      centrifugo:
+        condition: service_started
+
+   # Use postgres/example user/password credentials
 
 volumes:
   postgres_data:
