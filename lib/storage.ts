@@ -59,3 +59,8 @@ export function assertStorageConfig() {
     .filter((name) => !process.env[name])
   if (missing.length) throw new Error(`Missing MinIO environment variables: ${missing.join(', ')}`)
 }
+
+// Server-side reads use the configured internal endpoint, never the viewer's public URL.
+export async function readObject(key: string, range?: string | null) {
+  return client.send(new GetObjectCommand({ Bucket: bucket, Key: key, ...(range ? { Range: range } : {}) }))
+}
