@@ -1,0 +1,1 @@
+ALTER TABLE "ScreenAsset" ADD COLUMN "controls" JSONB NOT NULL DEFAULT '{}';
