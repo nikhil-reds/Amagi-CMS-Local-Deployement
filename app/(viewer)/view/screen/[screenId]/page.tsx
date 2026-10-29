@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import ScreenPlayer from './ScreenPlayer'
 import { assetUrl } from '@/lib/asset-url'
+import { controlsWithDefaults, mediaKind } from '@/lib/media-controls'
 import { screenIdentifierWhere } from '@/lib/screen-code'
 
 export default async function ScreenViewerPage({
@@ -31,6 +32,8 @@ export default async function ScreenViewerPage({
 
   const assets = await Promise.all(screen.assets.map(async (asset) => ({
     id: asset.id,
+    kind: mediaKind(asset.document),
+    controls: controlsWithDefaults(asset.controls),
     document: {
       id: asset.document.id,
       name: asset.document.name,
@@ -41,5 +44,5 @@ export default async function ScreenViewerPage({
     },
   })))
 
-  return <ScreenPlayer screenName={screen.name} assets={assets} kiosk={kiosk} />
+  return <ScreenPlayer screenId={screen.code} screenName={screen.name} assets={assets} kiosk={kiosk} />
 }
