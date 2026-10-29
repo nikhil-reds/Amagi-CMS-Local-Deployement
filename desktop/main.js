@@ -105,48 +105,29 @@ async function downloadTo(url, file) {
   fs.renameSync(partial, file)
 }
 
-// Fetch the screen's assignment and save the file locally. Returns the manifest entry
-// ({ name, mimeType, kind, file | url }) or null when nothing is assigned.
+// Save every assigned item in display order. Retain legacy manifests for upgrades.
 async function syncContent({ serverUrl, screenId }) {
-  const assets = await fetchJson(`${serverUrl}/api/screens/${encodeURIComponent(screenId)}/assets`)
-  const doc = assets[0]?.document
+  const assignments = await fetchJson(`${serverUrl}/api/screens/${encodeURIComponent(screenId)}/assets`)
+  const assets = assignments.map(({ document: doc }) => ({
+    name: doc.name,
+    mimeType: doc.mimeType,
+    sourceType: doc.sourceType,
+    websiteUrl: doc.websiteUrl,
+    url: doc.websiteUrl || doc.s3Url,
+  }))
   fs.mkdirSync(cacheDir(), { recursive: true })
-
-  if (!doc) {
-    const manifest = { screenId, asset: null }
-    fs.writeFileSync(manifestPath(), JSON.stringify(manifest))
-    return manifest.asset
-  }
-
-  const base = { name: doc.name, mimeType: doc.mimeType }
-  let asset
-  if (doc.websiteUrl) {
-    // A live website cannot be stored locally; it is opened from its address.
-    asset = { ...base, url: doc.websiteUrl }
-  } else if (doc.s3Url) {
-    // MinIO objects are public, so let Chromium load them directly. This avoids
-    // a second download/cache failure in the Electron main process and supports
-    // native video streaming and range requests.
-    asset = { ...base, url: doc.s3Url }
-  } else {
-    asset = null
-  }
-
-  fs.writeFileSync(manifestPath(), JSON.stringify({ screenId, asset }))
-  // Remove files that are no longer assigned to this screen.
-  for (const name of fs.readdirSync(cacheDir())) {
-    if (name !== 'manifest.json' && path.join(cacheDir(), name) !== asset?.file) {
-      fs.rmSync(path.join(cacheDir(), name), { force: true })
-    }
-  }
-  return asset
+  fs.writeFileSync(manifestPath(), JSON.stringify({ screenId, assets }))
+  return assets
 }
 
 function readSavedContent(screenId) {
   const manifest = readJson(manifestPath())
-  if (manifest.screenId !== screenId || !('asset' in manifest)) return undefined
-  if (manifest.asset?.file && !fs.existsSync(manifest.asset.file)) return undefined
-  return manifest.asset
+  if (manifest.screenId !== screenId) return undefined
+  const assets = Array.isArray(manifest.assets)
+    ? manifest.assets
+    : 'asset' in manifest ? (manifest.asset ? [manifest.asset] : []) : undefined
+  if (assets?.some((asset) => asset.file && !fs.existsSync(asset.file))) return undefined
+  return assets
 }
 
 function show(params) {
@@ -154,18 +135,23 @@ function show(params) {
   contentView.webContents.loadFile(path.join(__dirname, 'player.html'), { search: query })
 }
 
-function showAsset(asset) {
-  if (!asset) return show({ kind: 'saver' })
-  const mime = asset.mimeType || ''
-  const kind = asset.url
-    ? 'website'
-    : mime.startsWith('image/') ? 'image'
-    : mime.startsWith('video/') ? 'video'
-    : mime.startsWith('audio/') ? 'audio'
-    : mime === 'application/pdf' ? 'pdf'
-    : 'message'
-  if (kind === 'message') return show({ kind, text: asset.name || 'Unsupported file type.' })
-  show({ kind, name: asset.name || '', src: asset.url || pathToFileURL(asset.file).href })
+function showAsset(assets) {
+  if (!assets?.length) return show({ kind: 'saver' })
+  const items = assets.map((asset) => {
+    const mime = asset.mimeType || ''
+    const kind = asset.websiteUrl || asset.sourceType === 'WEBSITE' ? 'website'
+      : mime.startsWith('image/') ? 'image'
+      : mime.startsWith('video/') ? 'video'
+      : mime.startsWith('audio/') ? 'audio'
+      : mime === 'application/pdf' ? 'pdf'
+      : 'message'
+    return {
+      kind,
+      name: asset.name || '',
+      src: asset.url || (asset.file ? pathToFileURL(asset.file).href : ''),
+    }
+  })
+  show({ kind: 'layout', items: JSON.stringify(items) })
 }
 
 let lastShownKey = null
