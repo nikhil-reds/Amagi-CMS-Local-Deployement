@@ -7,13 +7,16 @@
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff; font-family: system-ui, sans-serif; }
     img, video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
     iframe { width: 100%; height: 100%; border: 0; background: #fff; display: block; }
-    .center { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px; text-align: center; background: #09090b; }
+    .layout { display: grid; width: 100%; height: 100%; overflow: hidden; }
+    .panel { min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+    .center { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px; text-align: center; background: #09090b; }
     .logo { position: absolute; top: 0; left: 0; width: 220px; height: 220px; border-radius: 50%; overflow: hidden; background: #fff; box-shadow: 0 0 40px rgba(255,255,255,.18); will-change: transform; }
     .logo img { width: 100%; height: 100%; object-fit: contain; padding: 14%; box-sizing: border-box; background: #fff; }
     .center p { margin: 0; max-width: 640px; font-size: 20px; font-weight: 600; opacity: .85; }
   </style>
 </head>
 <body>
+  <script src="media-runtime.js"></script>
   <script>
     const params = new URLSearchParams(location.search)
     const kind = params.get('kind')
@@ -83,7 +86,31 @@
       requestAnimationFrame(frame)
     }
 
-    if (kind === 'saver') {
+    const stages = new Map()
+    function renderItem(item) {
+      const panel = el('section', { className: 'panel', ariaLabel: item.name })
+      if (['pdf', 'video', 'image', 'website', 'audio'].includes(item.kind)) {
+        const stage = window.MediaRuntime.mount(panel, item, { kiosk: true })
+        if (item.id) stages.set(item.id, stage)
+      } else {
+        const box = el('div', { className: 'center' })
+        box.append(el('p', { textContent: item.name || 'Unsupported file type.' }))
+        panel.append(box)
+      }
+      return panel
+    }
+    window.player?.onControls?.((assets) => {
+      assets.forEach(asset => stages.get(asset.id)?.update(asset.controls))
+    })
+
+    if (kind === 'layout') {
+      const items = JSON.parse(params.get('items') || '[]')
+      const layout = el('main', { className: 'layout' })
+      layout.style.gridTemplateColumns = 'minmax(0, 1fr)'
+      layout.style.gridTemplateRows = `repeat(${items.length}, minmax(0, 1fr))`
+      items.forEach((item) => layout.append(renderItem(item)))
+      root.append(layout)
+    } else if (kind === 'saver') {
       screensaver()
     } else if (kind === 'image') {
       root.append(el('img', { src, alt: name }))
