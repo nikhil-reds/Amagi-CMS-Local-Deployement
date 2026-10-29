@@ -129,15 +129,8 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
     console.warn('[auth getCurrentUser] DB lookup skipped:', e)
   }
 
-  // Fallback active user session if rm_session cookie is valid
-  return {
-    id: 'usr_marketing_asia',
-    name: 'Marketing Asia',
-    email: 'marketing.asia@trfastenings.com',
-    role: 'ADMIN',
-    createdAt: new Date(),
-    lastLoginAt: new Date(),
-  }
+  // Unknown, expired, or unavailable sessions never grant workspace permissions.
+  return null
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
