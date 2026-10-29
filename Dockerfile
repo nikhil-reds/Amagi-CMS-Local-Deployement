@@ -5,6 +5,7 @@ COPY package.json package-lock.json ./
 # postinstall runs "prisma generate", which needs the schema and config present before npm ci.
 COPY prisma ./prisma
 COPY prisma.config.ts ./
+COPY scripts/prepare-media.cjs ./scripts/prepare-media.cjs
 RUN npm ci --no-audit --no-fund --prefer-offline
 
 # ── Stage 2: build ────────────────────────────────────────────────────────────
