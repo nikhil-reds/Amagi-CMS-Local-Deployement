@@ -79,6 +79,7 @@ export async function POST(
         data: {
           screenId: screen.id,
           documentId: document.id,
+          controls: { positionAt: Date.now() },
           position: (lastAsset?.position ?? -1) + 1,
         },
         include: { document: true },
