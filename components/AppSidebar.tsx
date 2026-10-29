@@ -7,6 +7,7 @@ import {
   FileText,
   LayoutDashboard,
   Monitor,
+  SlidersHorizontal,
   Tv,
   Users,
 } from "lucide-react"
@@ -39,6 +40,12 @@ const navigationItems = [
     href: "/screens",
     icon: Monitor,
     matcher: (pathname: string) => pathname.startsWith("/screens"),
+  },
+  {
+    label: "Control",
+    href: "/control",
+    icon: SlidersHorizontal,
+    matcher: (pathname: string) => pathname.startsWith("/control"),
   },
   {
     label: "Users",
