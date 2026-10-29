@@ -1,75 +1,27 @@
 'use client'
 
-import { FileText, Maximize2, Monitor } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Maximize2, Monitor } from 'lucide-react'
 import CloseButton from '../../[docId]/CloseButton'
+import ControlledMedia, { type ControlledAsset } from '@/components/ControlledMedia'
 
-type ScreenAsset = {
-  id: string
-  document: {
-    id: string
-    name: string
-    mimeType: string
-    s3Url: string
-    websiteUrl?: string | null
-    sourceType?: 'FILE' | 'WEBSITE'
-  }
-}
+type ScreenPlayerProps = { screenId: string; screenName: string; assets: ControlledAsset[]; kiosk?: boolean }
 
-type ScreenPlayerProps = {
-  screenName: string
-  assets: ScreenAsset[]
-  // Set by the desktop kiosk app: hides all player chrome and controls.
-  kiosk?: boolean
-}
-
-function AssetStage({ asset, kiosk }: { asset: ScreenAsset; kiosk: boolean }) {
-  const document = asset.document
-  const url = document.websiteUrl || document.s3Url
-
-  if (document.mimeType.startsWith('image/')) {
-    return <img src={url} alt={document.name} className="h-full w-full bg-black object-contain" />
-  }
-
-  if (document.mimeType.startsWith('video/')) {
-    return <video src={url} className="h-full w-full bg-black object-contain" controls={!kiosk} autoPlay loop />
-  }
-
-  if (document.sourceType === 'WEBSITE' || document.websiteUrl) {
-    return <iframe src={url} title={document.name} className="h-full w-full border-0 bg-white" />
-  }
-
-  if (document.mimeType.startsWith('audio/')) {
-    return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-zinc-950 p-8 text-white">
-        <FileText className="size-16 text-white/40" />
-        <p className="max-w-xl text-center text-lg font-bold">{document.name}</p>
-        <audio src={url} controls={!kiosk} autoPlay loop className="w-full max-w-xl" />
-      </div>
-    )
-  }
-
-  if (document.mimeType === 'application/pdf') {
-    const pdfUrl = `${url.split('#')[0]}#toolbar=0&navpanes=0&view=FitH`
-    return <iframe src={pdfUrl} title={document.name} className="h-full w-full border-0 bg-white" />
-  }
-
-  return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-zinc-950 p-8 text-center text-white">
-      <FileText className="size-16 text-white/40" />
-      <p className="max-w-xl text-lg font-bold">{document.name}</p>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-black hover:bg-zinc-200"
-      >
-        Open Asset
-      </a>
-    </div>
-  )
-}
-
-export default function ScreenPlayer({ screenName, assets, kiosk = false }: ScreenPlayerProps) {
+export default function ScreenPlayer({ screenId, screenName, assets: initialAssets, kiosk = false }: ScreenPlayerProps) {
+  const [assets, setAssets] = useState(initialAssets)
+  useEffect(() => {
+    const controller = new AbortController()
+    let timer: ReturnType<typeof setTimeout>
+    async function sync() {
+      try {
+        const response = await fetch(`/api/screens/${screenId}/controls`, { cache: 'no-store', signal: controller.signal })
+        if (response.ok) { const data = await response.json(); if (!controller.signal.aborted) setAssets(data.assets) }
+      } catch { /* Keep playing during temporary connection failures. */ }
+      finally { if (!controller.signal.aborted) timer = setTimeout(sync, 1000) }
+    }
+    void sync()
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [screenId])
   function enterFullscreen() {
     const target = document.documentElement
     if (!document.fullscreenElement) {
@@ -114,7 +66,7 @@ export default function ScreenPlayer({ screenName, assets, kiosk = false }: Scre
       >
         {assets.map((asset) => (
           <section key={asset.id} aria-label={asset.document.name} className="h-full min-h-0 min-w-0 overflow-hidden">
-            <AssetStage asset={asset} kiosk={kiosk} />
+            <ControlledMedia asset={asset} kiosk={kiosk} />
           </section>
         ))}
       </div>
