@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { FileText, Maximize2, Monitor } from 'lucide-react'
 import CloseButton from '../../[docId]/CloseButton'
 
@@ -50,7 +49,8 @@ function AssetStage({ asset, kiosk }: { asset: ScreenAsset; kiosk: boolean }) {
   }
 
   if (document.mimeType === 'application/pdf') {
-    return <iframe src={url} title={document.name} className="h-full w-full border-0 bg-white" />
+    const pdfUrl = `${url.split('#')[0]}#toolbar=0&navpanes=0&view=FitH`
+    return <iframe src={pdfUrl} title={document.name} className="h-full w-full border-0 bg-white" />
   }
 
   return (
@@ -70,17 +70,6 @@ function AssetStage({ asset, kiosk }: { asset: ScreenAsset; kiosk: boolean }) {
 }
 
 export default function ScreenPlayer({ screenName, assets, kiosk = false }: ScreenPlayerProps) {
-  const [activeAssetIndex, setActiveAssetIndex] = useState(0)
-  const activeAsset = assets[Math.min(activeAssetIndex, Math.max(assets.length - 1, 0))]
-
-  useEffect(() => {
-    if (assets.length < 2) return
-    const rotation = window.setInterval(() => {
-      setActiveAssetIndex((current) => (current + 1) % assets.length)
-    }, 10_000)
-    return () => window.clearInterval(rotation)
-  }, [assets.length])
-
   function enterFullscreen() {
     const target = document.documentElement
     if (!document.fullscreenElement) {
@@ -88,7 +77,7 @@ export default function ScreenPlayer({ screenName, assets, kiosk = false }: Scre
     }
   }
 
-  if (!activeAsset) {
+  if (assets.length === 0) {
     return (
       <div className="h-dvh flex flex-col items-center justify-center bg-zinc-950 text-white select-none">
         <div className="max-w-md text-center p-8 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl flex flex-col items-center gap-4">
@@ -119,20 +108,16 @@ export default function ScreenPlayer({ screenName, assets, kiosk = false }: Scre
           </button>
         </div>
       )}
-      <AssetStage asset={activeAsset} kiosk={kiosk} />
-      {!kiosk && assets.length > 1 && (
-        <div className="absolute inset-x-0 bottom-5 z-20 flex justify-center gap-2">
-          {assets.map((asset, index) => (
-            <button
-              key={asset.id}
-              onClick={() => setActiveAssetIndex(index)}
-              className={`h-2 rounded-full transition-all ${index === activeAssetIndex ? 'w-6 bg-white' : 'w-2 bg-white/45 hover:bg-white/75'}`}
-              aria-label={`Show item ${index + 1}: ${asset.document.name}`}
-              title={asset.document.name}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        className="grid h-full w-full overflow-hidden"
+        style={{ gridTemplateColumns: `repeat(${assets.length}, minmax(0, 1fr))` }}
+      >
+        {assets.map((asset) => (
+          <section key={asset.id} aria-label={asset.document.name} className="h-full min-h-0 min-w-0 overflow-hidden">
+            <AssetStage asset={asset} kiosk={kiosk} />
+          </section>
+        ))}
+      </div>
     </div>
   )
 }
