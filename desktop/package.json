@@ -8,7 +8,9 @@
   "author": "Amagi",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win portable --x64 --publish never"
+    "dist": "electron-builder --win portable --x64 --publish never",
+    "prestart": "node prepare-assets.cjs",
+    "predist": "node prepare-assets.cjs"
   },
   "devDependencies": {
     "electron": "^44.5.1",
@@ -27,7 +29,9 @@
       "player.html",
       "build-config.json",
       "icon.png",
-      "package.json"
+      "package.json",
+      "media-runtime.js",
+      "pdfjs/**/*"
     ],
     "win": {
       "icon": "icon.ico",
