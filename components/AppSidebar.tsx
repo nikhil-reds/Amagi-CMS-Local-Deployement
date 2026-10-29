@@ -97,7 +97,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
         })}
       </nav>
 
-      <div className={cn("space-y-3 border-t border-zinc-200 dark:border-zinc-800 pb-safe", compact ? "p-2" : "p-4")}>
+      <div className={cn("shrink-0 space-y-3 border-t border-zinc-200 dark:border-zinc-800", compact ? "px-2 pt-2" : "px-4 pt-4")} style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}>
         {/* Keep the player download available in the mobile sidebar as well. */}
         <a
           href="/XOS.exe"
