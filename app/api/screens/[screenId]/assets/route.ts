@@ -89,7 +89,7 @@ export async function POST(
       return NextResponse.json({ error: `A screen can contain up to ${MAX_ASSETS_PER_SCREEN} items` }, { status: 400 })
     }
 
-    await publishScreenChanged(screenId)
+    await publishScreenChanged(screen.id)
     return NextResponse.json(asset, { status: 201 })
   } catch (error) {
     console.error('[screen assets POST]', error)
