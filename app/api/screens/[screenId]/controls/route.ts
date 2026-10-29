@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/auth'
 import { screenIdentifierWhere } from '@/lib/screen-code'
 import { controlsWithDefaults, mediaKind, mediaPosition, validateControlPatch } from '@/lib/media-controls'
+import { requestOrigin, reachableAssetUrl } from '@/lib/request-origin'
 import { assetUrl } from '@/lib/asset-url'
 
 type Context = { params: Promise<{ screenId: string }> }
@@ -11,9 +12,10 @@ export async function GET(_request: NextRequest, { params }: Context) {
     const { screenId } = await params
     const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), include: { assets: { orderBy: { position: 'asc' }, include: { document: true } } } })
     if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
+    const origin = requestOrigin(_request)
     const assets = await Promise.all(screen.assets.map(async (asset) => ({
       id: asset.id, kind: mediaKind(asset.document), controls: controlsWithDefaults(asset.controls),
-      document: { id: asset.document.id, name: asset.document.name, mimeType: asset.document.mimeType, sourceType: asset.document.sourceType, websiteUrl: asset.document.websiteUrl, s3Url: asset.document.mimeType === 'application/pdf' ? new URL(`/api/screens/${screen.code}/pdf/${asset.id}`, _request.url).href : await assetUrl(asset.document) },
+      document: { id: asset.document.id, name: asset.document.name, mimeType: asset.document.mimeType, sourceType: asset.document.sourceType, websiteUrl: asset.document.websiteUrl, s3Url: asset.document.mimeType === 'application/pdf' ? new URL(`/api/screens/${screen.code}/pdf/${asset.id}`, origin).href : reachableAssetUrl(await assetUrl(asset.document), origin) },
     })))
     return NextResponse.json({ id: screen.id, code: screen.code, name: screen.name, assets }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
