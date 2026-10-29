@@ -110,7 +110,7 @@ export default function ScreenPlayer({ screenName, assets, kiosk = false }: Scre
       )}
       <div
         className="grid h-full w-full overflow-hidden"
-        style={{ gridTemplateColumns: `repeat(${assets.length}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: `repeat(${assets.length}, minmax(0, 1fr))` }}
       >
         {assets.map((asset) => (
           <section key={asset.id} aria-label={asset.document.name} className="h-full min-h-0 min-w-0 overflow-hidden">
