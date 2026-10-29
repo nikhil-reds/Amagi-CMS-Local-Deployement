@@ -6,7 +6,7 @@ const { pipeline } = require('stream/promises')
 const { pathToFileURL } = require('url')
 const { Centrifuge } = require('centrifuge')
 
-// No polling and no retry loops. The player syncs what is assigned to its screen ONCE per
+// Media files are fetched only when assignments change. Control settings use lightweight polling. The player syncs what is assigned to its screen ONCE per
 // launch, saves it to local disk, and plays from the local copy. If the server cannot be
 // reached it plays the last saved copy. While running it holds one idle connection to Ably
 // (realtime service, not the CMS); when content changes in the CMS, Ably delivers a
@@ -107,8 +107,10 @@ async function downloadTo(url, file) {
 
 // Save every assigned item in display order. Retain legacy manifests for upgrades.
 async function syncContent({ serverUrl, screenId }) {
-  const assignments = await fetchJson(`${serverUrl}/api/screens/${encodeURIComponent(screenId)}/assets`)
-  const assets = assignments.map(({ document: doc }) => ({
+  const snapshot = await fetchJson(`${serverUrl}/api/screens/${encodeURIComponent(screenId)}/controls`)
+  const assignments = snapshot.assets
+  const assets = assignments.map(({ id, controls, document: doc }) => ({
+    id, controls,
     name: doc.name,
     mimeType: doc.mimeType,
     sourceType: doc.sourceType,
@@ -146,6 +148,8 @@ function showAsset(assets) {
       : mime === 'application/pdf' ? 'pdf'
       : 'message'
     return {
+      id: asset.id,
+      controls: asset.controls || {},
       kind,
       name: asset.name || '',
       src: asset.url || (asset.file ? pathToFileURL(asset.file).href : ''),
@@ -201,6 +205,27 @@ async function loadScreen(live = false) {
   }
 }
 
+// Small control snapshots are fetched separately from media. Never reload files for a
+// playback setting change, and stop the old loop immediately when switching screens.
+let controlTimer = null
+let controlGeneration = 0
+let latestControls = null
+function startControlSync() {
+  const generation = ++controlGeneration
+  const target = current
+  latestControls = null
+  async function tick() {
+    try {
+      const data = await fetchJson(`${target.serverUrl}/api/screens/${encodeURIComponent(target.screenId)}/controls`)
+      if (current !== target || generation !== controlGeneration) return
+      latestControls = data.assets
+      if (contentView && !contentView.webContents.isDestroyed()) contentView.webContents.send('controls:update', data.assets)
+    } catch (error) { console.warn('Controls temporarily unavailable:', error.message) }
+    finally { if (current === target && generation === controlGeneration) controlTimer = setTimeout(tick, 1000) }
+  }
+  tick()
+}
+
 // ── Realtime nudges (Centrifugo) ─────────────────────────────────────────────
 
 const realtimeCachePath = () => path.join(app.getPath('userData'), 'realtime.json')
@@ -215,6 +240,8 @@ function scheduleLiveSync() {
 }
 
 function stopRealtime() {
+  clearTimeout(controlTimer)
+  controlGeneration++
   clearTimeout(syncDebounce)
   if (realtimeClient) {
     try { realtimeClient.close() } catch {}
@@ -225,6 +252,7 @@ function stopRealtime() {
 // Ask the CMS once which channel/token to use (cached for offline launches), then subscribe.
 async function startRealtime() {
   stopRealtime()
+  startControlSync()
   const target = current
   if (!target) return
 
@@ -409,6 +437,9 @@ function createWindow() {
     },
   })
   contentView.setBackgroundColor('#000000')
+  contentView.webContents.on('did-finish-load', () => {
+    if (latestControls) contentView.webContents.send('controls:update', latestControls)
+  })
 
   overlayView = new WebContentsView({
     webPreferences: {
