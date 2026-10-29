@@ -338,3 +338,26 @@ For players on other devices, set `MINIO_PUBLIC_URL` to `http://<CMS-PC-LAN-IP>:
 For host development, start only the dependencies with `docker compose up -d db minio centrifugo`, then run `npm run dev`. `APP_PORT` controls Docker publishing; the development server defaults to 3000 (use `npm run dev -- --port 3001` to change it). Keep public URLs aligned with any host port changes.
 
 The local `.env` contains generated credentials and is ignored by Git and Docker builds. `.env.example` contains placeholders for new installations.
+
+## Media controls
+
+Open `/control`, select a screen, then choose an assigned item in its media panel. Settings save automatically per screen assignment; two PDFs on the same screen have independent settings. Changes normally reach an open browser or updated XOS player within about one second. Videos update in place instead of reloading. The top-to-bottom screen layout is preserved.
+
+- `GET /api/screens/:screenId/controls` returns the screen and ordered assignments with resolved sources, media kinds, and saved settings. Screen codes and internal screen IDs both work. Like the public screen viewer, this read endpoint is public.
+- `PATCH /api/screens/:screenId/controls` accepts `{ "assetId": "assignment-id", "patch": { "page": 2 } }`. A valid admin/editor session is required. Unknown fields, inappropriate settings for a media type, invalid values, and assignments belonging to a different screen are rejected. Partial updates merge transactionally.
+- `GET /api/screens/:screenId/pdf/:assetId` streams an assigned PDF from storage for the shared PDF.js renderer. It supports upstream byte ranges and excludes unassigned/non-PDF assets.
+
+PDF settings: `page`, `zoom` (25–300), `scale` (`width`, `page`, `actual`), `rotation` (0/90/180/270), `toolbar`, `thumbnails`. Video settings: `paused`, `position` (seconds), `volume` (0–100), `rate` (0.25–4), `loop`, `autoplay`, `fit` (`contain`, `cover`, `none`). Website settings: `url` (HTTP/HTTPS), `zoom`, `refresh` (seconds, 0 disables), `reload` (a new numeric revision). Image settings: `rotation`, `fit`, `background` (`black`, `white`, `transparent`).
+
+The video timeline is estimated from the saved command timestamp, not device telemetry. Browser sound playback may require one click in the screen player; XOS enables kiosk autoplay. Websites must permit iframe embedding. PDF toolbar/index visibility starts off by default. Control-page video previews are paused and silent to avoid duplicate audio.
+
+Local verification:
+
+```powershell
+node node_modules/tsx/dist/cli.mjs --test scripts/media-controls.test.ts
+node node_modules/tsx/dist/cli.mjs scripts/control-audit.ts
+```
+
+The integration audit uses the configured seeded development account through the normal login API, creates disposable test screens/accounts, and removes them on success. `--keep-fixtures` retains fixtures for UI checks; `--cleanup` removes them afterward. Do not run it against production.
+
+PDF.js assets are prepared by `scripts/prepare-media.cjs` before development/build and after installation. XOS's `predist` copies the same renderer and PDF assets into its package. Rebuild XOS after renderer changes, then copy `desktop/dist/AmagiScreenPlayer-1.0.0.exe` to `public/XOS.exe`.
