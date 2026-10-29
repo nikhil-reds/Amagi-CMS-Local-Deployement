@@ -53,3 +53,10 @@ next-env.d.ts
 # Generated media renderer dependencies
 /public/pdfjs
 /desktop/pdfjs
+
+# Font assets (binary, served via CDN or package manager)
+/public/AbroSans
+/public/Poppins
+
+# Test output artifacts
+/test-results
