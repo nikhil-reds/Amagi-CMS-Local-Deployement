@@ -9,13 +9,17 @@
     "lint": "eslint",
     "postinstall": "prisma generate && node scripts/prepare-media.cjs",
     "predev": "node scripts/prepare-media.cjs",
-    "prebuild": "node scripts/prepare-media.cjs"
+    "prebuild": "node scripts/prepare-media.cjs",
+    "test:realtime": "tsx --test scripts/realtime.test.ts",
+    "test:realtime:integration": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/realtime-integration.ts",
+    "test:realtime:browser": "node --env-file=.env node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1151.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@types/pg": "^8.20.0",
+    "centrifuge": "^5.3.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.17.0",
@@ -32,6 +36,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
