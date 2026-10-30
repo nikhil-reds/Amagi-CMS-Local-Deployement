@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Clock, Copy, ExternalLink, Info, Monitor, PlusCircle, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import './screens.css'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -124,7 +125,9 @@ export default function ScreensDashboard() {
 
       setScreens((prev) => prev.filter((screen) => screen.id !== id))
       setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id))
-      toast.success('Screen deleted successfully')
+      const result = await res.json()
+      if (result.realtime?.delivered === false) toast.error('Screen deleted, but live delivery failed. Reconnect the player.')
+      else toast.success('Screen deleted successfully')
     } catch {
       toast.error('Failed to delete screen')
     } finally {
@@ -135,12 +138,17 @@ export default function ScreensDashboard() {
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
     try {
+      let delivered = true
       for (const id of selectedIds) {
-        await fetch(`/api/screens/${id}`, { method: 'DELETE' })
+        const response = await fetch(`/api/screens/${id}`, { method: 'DELETE' })
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Failed to delete screen')
+        if (result.realtime?.delivered === false) delivered = false
       }
       setScreens((prev) => prev.filter((screen) => !selectedIds.includes(screen.id)))
       setSelectedIds([])
-      toast.success('Selected screens deleted')
+      if (!delivered) toast.error('Screens deleted, but live delivery failed. Reconnect affected players.')
+      else toast.success('Selected screens deleted')
     } catch {
       toast.error('Bulk deletion encountered errors')
     } finally {
@@ -172,21 +180,22 @@ export default function ScreensDashboard() {
     }
   }
 
-  // Background: white at the top, light sea blue in the middle, dark blue at the bottom.
+  // Screens presentation; existing data and event handlers are preserved.
   return (
-    <div className="bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] min-h-dvh px-3 py-5 sm:px-5 sm:py-8 lg:px-8 lg:py-10 3xl:px-12 flex flex-col gap-8 antialiased">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-100 dark:border-zinc-800 pb-6 shrink-0">
+    <div className="screens-page" data-screens-ui>
+      <header className="screens-header">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Screens</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Register and monitor display endpoints.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Manage your connected displays.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="screens-tools">
           <div className="relative w-full sm:w-auto">
             <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3.5 sm:top-2.5" />
             <input
               type="text"
-              placeholder="Search screens..."
+              placeholder="Search screens"
+              aria-label="Search screens"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 sm:py-2 text-base sm:text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white w-full sm:w-60 transition-all shadow-sm"
@@ -194,6 +203,7 @@ export default function ScreensDashboard() {
           </div>
 
           <select
+            aria-label="Sort screens"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
@@ -206,14 +216,14 @@ export default function ScreensDashboard() {
           <Button
             onClick={handleAddScreen}
             disabled={isCreating}
-            className="bg-black dark:bg-white hover:bg-zinc-900 dark:hover:bg-zinc-200 text-white dark:text-black font-semibold text-xs h-10 sm:h-auto py-2 px-4 rounded-xl shadow-md cursor-pointer flex flex-1 sm:flex-none items-center justify-center gap-1.5 disabled:opacity-50"
+            className="screens-add"
           >
-            <PlusCircle className="w-3.5 h-3.5" /> Add Screen
+            Add screen <span className="screens-add-dot"><PlusCircle className="w-5 h-5" /></span>
           </Button>
         </div>
       </header>
 
-      <section className="grid grid-cols-2 gap-3 sm:gap-5 shrink-0">
+      <section aria-label="Screen statistics" className="screens-stats grid grid-cols-2 gap-3 sm:gap-5 shrink-0">
         <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg">
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Screens</span>
@@ -236,7 +246,7 @@ export default function ScreensDashboard() {
       </section>
 
       {selectedIds.length > 0 && (
-        <div className="bg-black text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl flex items-center justify-between shadow-lg shrink-0">
+        <div className="screens-bulk bg-black text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl flex items-center justify-between shadow-lg shrink-0">
           <span className="text-xs font-semibold">
             {selectedIds.length} screen{selectedIds.length !== 1 ? 's' : ''} selected
           </span>
@@ -246,7 +256,7 @@ export default function ScreensDashboard() {
                 <Trash2 className="w-3.5 h-3.5" /> Delete Selected
               </button>
             </DialogTrigger>
-            <DialogContent className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
+            <DialogContent data-screens-dialog className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
               <DialogHeader>
                 <DialogTitle>Confirm Bulk Deletion</DialogTitle>
                 <DialogDescription>
@@ -262,7 +272,7 @@ export default function ScreensDashboard() {
         </div>
       )}
 
-      <section className="flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+      <section aria-label="Registered screens" className="screens-list flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
         {loading ? (
           <div className="p-6 space-y-4">
             {Array.from({ length: 5 }).map((_, idx) => (
@@ -343,13 +353,14 @@ export default function ScreensDashboard() {
                 <TableHead className="w-12 text-center">
                   <input
                     type="checkbox"
+                    aria-label="Select all screens"
                     checked={selectedIds.length === filteredScreens.length && filteredScreens.length > 0}
                     onChange={toggleSelectAll}
                     className="w-3.5 h-3.5 accent-black rounded cursor-pointer mt-1"
                   />
                 </TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Screen Name</TableHead>
-                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Assigned Asset</TableHead>
+                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">What it plays</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 hidden lg:table-cell">Created Date</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 text-right">Actions</TableHead>
               </TableRow>
@@ -363,15 +374,16 @@ export default function ScreensDashboard() {
                     <TableCell className="text-center">
                       <input
                         type="checkbox"
+                        aria-label={`Select ${screen.name}`}
                         checked={isSelected}
                         onChange={() => toggleSelectRow(screen.id)}
                         className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
                       />
                     </TableCell>
                     <TableCell className="p-4 font-semibold text-zinc-800 dark:text-zinc-100 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Monitor className="w-4 h-4 text-zinc-500" />
-                        <span>{screen.name}</span>
+                      <div className="screens-name">
+                        <span className="screens-monitor"><Monitor className="w-5 h-5" /></span>
+                        <span><b>{screen.name}</b><small>{screen.code}</small></span>
                       </div>
                     </TableCell>
                     <TableCell className="p-4 text-xs">
@@ -385,7 +397,7 @@ export default function ScreensDashboard() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Nothing</span>
+                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Nothing assigned yet</span>
                       )}
                     </TableCell>
                     <TableCell className="p-4 hidden lg:table-cell text-xs text-zinc-500 dark:text-zinc-400">{formatDate(screen.createdAt)}</TableCell>
@@ -435,7 +447,7 @@ export default function ScreensDashboard() {
       </section>
 
       <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <DialogContent className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
+        <DialogContent data-screens-dialog className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
@@ -455,7 +467,7 @@ export default function ScreensDashboard() {
       </Dialog>
 
       <Sheet open={selectedDetailScreen !== null} onOpenChange={(open) => !open && setSelectedDetailScreen(null)}>
-        <SheetContent className="w-full sm:max-w-md bg-white dark:bg-zinc-950 p-4 sm:p-6 overflow-y-auto shadow-2xl flex flex-col gap-6">
+        <SheetContent data-screens-drawer className="w-full sm:max-w-md bg-white dark:bg-zinc-950 p-4 sm:p-6 overflow-y-auto shadow-2xl flex flex-col gap-6">
           {selectedDetailScreen && (
             <>
               <SheetHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
