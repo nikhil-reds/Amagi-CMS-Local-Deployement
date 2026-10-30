@@ -69,7 +69,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
     <aside className={cn("console-sidebar", compact && "console-sidebar-compact")}>
       <div className="console-sidebar-brand">
         <div className="console-sidebar-logo"><Image src="/amagi-logo-white.svg" alt="Amagi" width={125} height={35} unoptimized /></div>
-        {!compact && <><p className="console-sidebar-title">Multimedia Console</p><p className="console-sidebar-description">Streaming media<br />management</p></>}
+        {!compact && <p className="console-sidebar-title">Multimedia Console</p>}
       </div>
 
       <nav className="console-sidebar-nav" aria-label="Main navigation">
