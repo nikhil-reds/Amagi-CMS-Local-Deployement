@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
+import './documents.css'
 import {
   FileIcon as LucideFileIcon,
   Search,
@@ -319,7 +320,9 @@ export default function DocumentsDashboard() {
     try {
       const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        toast.success('Document deleted successfully')
+        const result = await res.json()
+        if (result.realtime?.delivered === false) toast.error('Document deleted, but live delivery failed. Reconnect affected players.')
+        else toast.success('Document deleted successfully')
         setDocuments((prev) => prev.filter((d) => d.id !== id))
         setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id))
       } else {
@@ -341,7 +344,9 @@ export default function DocumentsDashboard() {
         body: JSON.stringify({ ids: selectedIds }),
       })
       if (res.ok) {
-        toast.success('Selected documents deleted successfully')
+        const result = await res.json()
+        if (result.realtime?.delivered === false) toast.error('Documents deleted, but live delivery failed. Reconnect affected players.')
+        else toast.success('Selected documents deleted successfully')
         setDocuments((prev) => prev.filter((d) => !selectedIds.includes(d.id)))
         setSelectedIds([])
       } else {
@@ -411,77 +416,29 @@ export default function DocumentsDashboard() {
     )
   }
 
-  // Background: white at the top, light sea blue in the middle, dark blue at the bottom.
+  // Documents presentation; existing data and actions are preserved.
   return (
-    <div className="bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] min-h-dvh px-3 py-5 sm:px-5 sm:py-8 lg:px-8 lg:py-10 3xl:px-12 flex flex-col gap-5 sm:gap-8 antialiased">
+    <div className="documents-page" data-documents-ui>
       {/* 1. Page Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-100 dark:border-zinc-800 pb-6 shrink-0">
+      <header className="documents-header">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Documents</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Manage and review stored files and website assets securely.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Stored files and website assets</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Search bar */}
-          <div className="relative w-full sm:w-auto">
-            <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3.5 sm:top-2.5" />
-            <input
-              type="text"
-              placeholder="Search filename, tags..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 sm:py-2 text-base sm:text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white w-full sm:w-60 transition-all shadow-sm"
-            />
+        <div className="documents-header-actions">
+          <div className="documents-meter" aria-label="Storage used">
+            <span><b>{formatBytes(totalSize)}</b> of 100 MB</span>
+            <span className="documents-meter-track"><i style={{ width: `${Math.min(100, (totalSize / (1024 * 1024 * 100)) * 100)}%` }} /></span>
           </div>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-          </select>
-
-          {/* Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
-          >
-            <option value="ALL">All Formats</option>
-            <option value="PDF">PDF</option>
-            <option value="IMAGE">Images</option>
-            <option value="VIDEO">Videos</option>
-            <option value="AUDIO">Audio</option>
-            <option value="WEBSITE">Websites</option>
-            <option value="DOCUMENTS">Documents</option>
-          </select>
-
-          {/* Sort selection */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
-          >
-            <option value="NEWEST">Newest Uploaded</option>
-            <option value="OLDEST">Oldest Uploaded</option>
-            <option value="NAME">Alphabetical (A-Z)</option>
-            <option value="SIZE">Largest Size</option>
-          </select>
-
           {/* Upload trigger button using Dialog */}
           <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-black hover:bg-zinc-900 text-white font-semibold text-xs h-10 sm:h-auto py-2 px-4 rounded-xl shadow-md cursor-pointer flex w-full sm:w-auto items-center justify-center gap-1.5">
-                <Upload className="w-3.5 h-3.5" /> Add to Storage
+              <Button className="documents-upload">
+                Upload files <span className="documents-upload-dot"><Upload className="w-5 h-5" /></span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-4xl rounded-2xl bg-white p-0 overflow-y-auto shadow-2xl">
+            <DialogContent data-documents-dialog className="max-w-[calc(100%-1rem)] sm:max-w-4xl rounded-2xl bg-white p-0 overflow-y-auto shadow-2xl">
               <div className="grid grid-cols-1 md:grid-cols-12">
                 {/* Left panel: Specifications and Instructions (Col Span 5) */}
                 <div className="md:col-span-5 bg-zinc-50 p-4 sm:p-6 border-r border-zinc-100 flex flex-col justify-between">
@@ -688,7 +645,7 @@ export default function DocumentsDashboard() {
       </header>
 
       {/* 2. Top Statistics Section */}
-      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 shrink-0 max-md:[&>*:last-child]:col-span-2 md:max-lg:[&>*:last-child]:col-span-1">
+      <section aria-label="Library statistics" className="documents-stats grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 shrink-0 max-md:[&>*:last-child]:col-span-2 md:max-lg:[&>*:last-child]:col-span-1">
         {/* Total Documents */}
         <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden group">
           <div className="flex items-center justify-between text-zinc-400">
@@ -757,6 +714,60 @@ export default function DocumentsDashboard() {
         </div>
       </section>
 
+      <div className="documents-tools" role="group" aria-label="Search and filter documents">
+          {/* Search bar */}
+          <div className="relative w-full sm:w-auto">
+            <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3.5 sm:top-2.5" />
+            <input
+              type="text"
+              placeholder="Search names or formats"
+              aria-label="Search documents"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 sm:py-2 text-base sm:text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white w-full sm:w-60 transition-all shadow-sm"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <select
+            aria-label="Filter by status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="PENDING">Pending</option>
+            <option value="FAILED">Failed</option>
+          </select>
+
+          <div className="documents-formats" role="group" aria-label="Filter by format">
+            {[
+              ['ALL', 'All'], ['PDF', 'PDF'], ['IMAGE', 'Images'],
+              ['VIDEO', 'Videos'], ['AUDIO', 'Audio'], ['WEBSITE', 'Websites'], ['DOCUMENTS', 'Documents'],
+            ].map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={typeFilter === value} onClick={() => setTypeFilter(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort selection */}
+          <select
+            aria-label="Sort documents"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
+          >
+            <option value="NEWEST">Newest Uploaded</option>
+            <option value="OLDEST">Oldest Uploaded</option>
+            <option value="NAME">Alphabetical (A-Z)</option>
+            <option value="SIZE">Largest Size</option>
+          </select>
+
+      </div>
+
       {/* 3. Bulk Action Bar */}
       {selectedIds.length > 0 && (
         <div className="bg-black text-white px-6 py-3.5 rounded-2xl flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200 shrink-0">
@@ -776,7 +787,7 @@ export default function DocumentsDashboard() {
                   <Trash2 className="w-3.5 h-3.5" /> Delete Selected
                 </button>
               </DialogTrigger>
-              <DialogContent className="bg-white rounded-2xl p-6">
+              <DialogContent data-documents-dialog className="bg-white rounded-2xl p-6">
                 <DialogHeader>
                   <DialogTitle>Confirm Bulk Deletion</DialogTitle>
                   <DialogDescription>
@@ -794,7 +805,7 @@ export default function DocumentsDashboard() {
       )}
 
       {/* 4. Table / Main List Workspace */}
-      <section className="flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+      <section aria-label="Document library" className="documents-library flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
         {loading ? (
           <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
             <div className="space-y-4">
@@ -852,6 +863,7 @@ export default function DocumentsDashboard() {
                     <TableHead className="w-12 text-center">
                       <input
                         type="checkbox"
+                        aria-label="Select all documents on this page"
                         checked={selectedIds.length === paginatedDocs.length && paginatedDocs.length > 0}
                         onChange={toggleSelectAll}
                         className="w-3.5 h-3.5 accent-black rounded cursor-pointer mt-1"
@@ -879,6 +891,7 @@ export default function DocumentsDashboard() {
                         <TableCell className="text-center">
                           <input
                             type="checkbox"
+                            aria-label={`Select ${doc.name}`}
                             checked={isSelected}
                             onChange={() => toggleSelectRow(doc.id)}
                             className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
@@ -1043,7 +1056,7 @@ export default function DocumentsDashboard() {
 
       {/* 5. Row Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <DialogContent className="bg-white dark:bg-zinc-950 rounded-2xl p-6 shadow-2xl">
+        <DialogContent data-documents-dialog className="bg-white dark:bg-zinc-950 rounded-2xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
@@ -1064,7 +1077,7 @@ export default function DocumentsDashboard() {
 
       {/* 6. Document Preview and Details Modal */}
       <Dialog open={selectedDetailDoc !== null} onOpenChange={(open) => !open && setSelectedDetailDoc(null)}>
-        <DialogContent className="max-w-[calc(100%-1rem)] overflow-y-auto md:overflow-hidden rounded-2xl bg-white dark:bg-zinc-950 p-0 shadow-2xl sm:max-w-5xl">
+        <DialogContent data-documents-dialog className="max-w-[calc(100%-1rem)] overflow-y-auto md:overflow-hidden rounded-2xl bg-white dark:bg-zinc-950 p-0 shadow-2xl sm:max-w-5xl">
           {selectedDetailDoc && (
             <div className="grid grid-cols-1 md:max-h-[90vh] md:overflow-hidden md:grid-cols-[1fr_360px]">
               <div className="min-h-[240px] sm:min-h-[360px] bg-zinc-950 dark:bg-black">
