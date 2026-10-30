@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { assetUrl } from '@/lib/asset-url'
 import { requireRole } from '@/lib/auth'
+import { touchScreen } from '@/lib/screen-snapshot'
+import { publishScreenChanged } from '@/lib/realtime'
 
 // Links that point straight at an image or video are stored with that media type
 // so screens render them as media instead of as a web page.
@@ -102,11 +104,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'List of document IDs is required' }, { status: 400 })
     }
 
-    const deleted = await prisma.document.deleteMany({
-      where: { id: { in: ids } },
+    const { deleted, screenIds } = await prisma.$transaction(async tx => {
+      const affected = await tx.screenAsset.findMany({ where: { documentId: { in: ids } }, select: { screenId: true }, distinct: ['screenId'] })
+      const screenIds = affected.map(item => item.screenId).sort()
+      const deleted = await tx.document.deleteMany({ where: { id: { in: ids } } })
+      for (const id of screenIds) await touchScreen(tx, id)
+      return { deleted, screenIds }
     })
-
-    return NextResponse.json({ success: true, count: deleted.count })
+    const deliveries = await Promise.all(screenIds.map(id => publishScreenChanged(id)))
+    return NextResponse.json({ success: true, count: deleted.count, realtime: { delivered: deliveries.every(item => item.delivered) } })
   } catch (error) {
     console.error('[documents bulk DELETE]', error)
     return NextResponse.json({ error: 'Failed to perform bulk delete' }, { status: 500 })
