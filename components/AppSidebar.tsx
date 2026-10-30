@@ -1,18 +1,19 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   Download,
   FileText,
   LayoutDashboard,
-  Monitor,
+  Grid2X2,
   SlidersHorizontal,
   Tv,
   Users,
 } from "lucide-react"
 
-import BrandLogo from "@/components/BrandLogo"
+import "./sidebar.css"
 import LogoutButton from "@/components/LogoutButton"
 import { cn } from "@/lib/utils"
 
@@ -38,7 +39,7 @@ const navigationItems = [
   {
     label: "Screens",
     href: "/screens",
-    icon: Monitor,
+    icon: Grid2X2,
     matcher: (pathname: string) => pathname.startsWith("/screens"),
   },
   {
@@ -65,12 +66,13 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-full w-full flex-col bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className={cn("flex h-16 shrink-0 items-center border-b border-zinc-200 dark:border-zinc-800", compact ? "justify-center px-2" : "px-5")}>
-        {compact ? <BrandLogo size="sm" className="[&>div:last-child]:hidden" /> : <BrandLogo size="sm" />}
+    <aside className={cn("console-sidebar", compact && "console-sidebar-compact")}>
+      <div className="console-sidebar-brand">
+        <div className="console-sidebar-logo"><Image src="/amagi-logo-white.svg" alt="Amagi" width={125} height={35} unoptimized /></div>
+        {!compact && <><p className="console-sidebar-title">Multimedia Console</p><p className="console-sidebar-description">Streaming media<br />management</p></>}
       </div>
 
-      <nav className={cn("flex-1 space-y-1 overflow-y-auto py-4", compact ? "px-2" : "px-3")}>
+      <nav className="console-sidebar-nav" aria-label="Main navigation">
         {navigationItems.map((item) => {
           const isActive = item.matcher(pathname)
           const Icon = item.icon
@@ -82,13 +84,8 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
               onClick={onNavigate}
               title={compact ? item.label : undefined}
               aria-label={item.label}
-              className={cn(
-                "flex h-11 items-center gap-3 rounded-lg text-sm font-semibold transition-colors lg:h-10",
-                compact ? "justify-center px-0" : "px-3",
-                isActive
-                  ? "bg-black text-white shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50"
-              )}
+              aria-current={isActive ? "page" : undefined}
+              className={cn("console-sidebar-link", isActive && "console-sidebar-link-active")}
             >
               <Icon className="size-4" />
               {!compact && <span className="truncate">{item.label}</span>}
@@ -97,29 +94,17 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
         })}
       </nav>
 
-      <div className={cn("shrink-0 space-y-3 border-t border-zinc-200 dark:border-zinc-800", compact ? "px-2 pt-2" : "px-4 pt-4")} style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}>
-        {/* Keep the player download available in the mobile sidebar as well. */}
+      <div className="console-sidebar-bottom">
         <a
-          href="/XOS.exe"
+          href="/XOS.exe?v=1.0.1"
           download="XOS.exe"
           title={compact ? "Download XOS (Windows)" : undefined}
           aria-label="Download XOS"
-          className={cn(
-            "flex h-10 w-full items-center rounded-lg bg-blue-600 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700",
-            compact ? "justify-center" : "gap-3 px-3"
-          )}
+          className="console-sidebar-download"
         >
           <Download className="size-4" />
-          {!compact && <span>Download XOS</span>}
+          {!compact && <span><b>Download XOS</b><small>Player app for your<br />screens</small></span>}
         </a>
-        {!compact && (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-3">
-            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Media workspace</p>
-            <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-              Manage uploads, documents, and connected displays.
-            </p>
-          </div>
-        )}
         <LogoutButton compact={compact} />
       </div>
     </aside>
