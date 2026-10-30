@@ -1,26 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'node:crypto'
-import { screenChannel } from '@/lib/realtime'
+import { screenChannel, assertRealtimeConfig } from '@/lib/realtime'
 import { prisma } from '@/lib/prisma'
 import { screenIdentifierWhere } from '@/lib/screen-code'
+import { getCurrentUser } from '@/lib/auth'
+import { CONTROL_SESSION_MS, signRealtimeToken } from '@/lib/realtime-token'
 
-function createToken(screenId: string) {
-  const secret = process.env.CENTRIFUGO_TOKEN_SECRET
-  if (!secret) return null
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
-  const payload = Buffer.from(JSON.stringify({ sub: `screen-player:${screenId}`, channels: [screenChannel(screenId)], exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')
-  const unsigned = `${header}.${payload}`
-  return `${unsigned}.${crypto.createHmac('sha256', secret).update(unsigned).digest('base64url')}`
+type Context = { params: Promise<{ screenId: string }> }
+async function issue(request: NextRequest, context: Context, controls: boolean) {
+  try {
+    assertRealtimeConfig()
+    const user = controls ? await getCurrentUser() : null
+    if (controls && !user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+    if (controls && !['ADMIN', 'EDITOR'].includes(user!.role)) return NextResponse.json({ error: 'You cannot control screens' }, { status: 403 })
+    const { screenId } = await context.params
+    const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), select: { id: true } })
+    if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
+    const expiresAt = controls ? Math.floor((Date.now() + CONTROL_SESSION_MS) / 1000) * 1000 : null
+    const expiry = expiresAt ? { exp: expiresAt / 1000 } : {}
+    const sub = controls ? `controller:${user!.id}` : `screen-player:${screen.id}`
+    const channel = screenChannel(screen.id)
+    // Player credentials are scoped to this read-only channel and are never cached on disk.
+    return NextResponse.json({ url: process.env.CENTRIFUGO_PUBLIC_URL, channel,
+      token: signRealtimeToken({ sub, ...expiry }),
+      subscriptionToken: signRealtimeToken({ sub, channel, ...expiry }),
+      expiresAt,
+      sessionToken: controls ? signRealtimeToken({ purpose: 'controls', sub: user!.id, screenId: screen.id, ...expiry }) : null,
+    }, { headers: { 'Cache-Control': 'no-store' } })
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Realtime unavailable' }, { status: 503 })
+  }
 }
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ screenId: string }> }
-) {
-  const { screenId } = await params
-  const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), select: { id: true } })
-  if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
-  const url = process.env.CENTRIFUGO_PUBLIC_URL
-  const token = createToken(screen.id)
-  if (!url || !token) return NextResponse.json({ url: null, token: null, channel: null })
-  return NextResponse.json({ url, token, channel: screenChannel(screen.id) })
-}
+export const GET = (request: NextRequest, context: Context) => issue(request, context, false)
+export const POST = (request: NextRequest, context: Context) => issue(request, context, true)
