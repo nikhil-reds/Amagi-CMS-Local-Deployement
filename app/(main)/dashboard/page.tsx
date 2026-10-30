@@ -16,6 +16,7 @@ import {
   Copy,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import './dashboard.css'
 import { formatBytes, formatDate } from '@/components/main-screen/shared'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -57,7 +58,7 @@ function StatCard({
   icon: React.ElementType
 }) {
   return (
-    <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg min-h-30">
+    <div className="dashboard-stat dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg min-h-30">
       <div className="flex items-center justify-between text-zinc-400">
         <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
         <Icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
@@ -113,10 +114,10 @@ export default function DashboardPage() {
   const latestSessions = sessions.slice(0, 5)
   const latestDocuments = documents.slice(0, 5)
 
-  // Background: white at the top, light sea blue in the middle, dark blue at the bottom.
+  // Dashboard presentation; all data and actions are preserved.
   return (
-    <div className="min-h-dvh bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] px-3 py-5 sm:px-6 sm:py-8 lg:px-8 3xl:px-12 flex flex-col gap-5 sm:gap-8">
-      <header className="flex flex-col gap-2 border-b border-sky-100 dark:border-zinc-800/50 pb-6">
+    <div className="dashboard-page" data-dashboard-ui>
+      <header className="dashboard-heading">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">Dashboard</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Overview of sessions, uploaded documents, and registered screens.</p>
       </header>
@@ -142,7 +143,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-5 max-md:[&>*:last-child]:col-span-2 md:max-xl:[&>*:last-child]:col-span-1">
+          <section aria-label="Workspace statistics" className="dashboard-stats grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-5 max-md:[&>*:last-child]:col-span-2 md:max-xl:[&>*:last-child]:col-span-1">
             <StatCard label="Total Documents" value={documents.length} helper="Total uploaded files cataloged" icon={FileText} />
             <StatCard label="Storage Used" value={formatBytes(stats.totalSize)} helper="Cloud media currently tracked" icon={HardDrive} />
             <StatCard label="All Sessions" value={sessions.length} helper={`${latestSessions.length} recent sessions visible below`} icon={Clock} />
@@ -150,8 +151,8 @@ export default function DashboardPage() {
             <StatCard label="Recent (24h)" value={stats.recent} helper="Files added in the last 24 hours" icon={Upload} />
           </section>
 
-          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:[&>*:last-child:nth-child(odd)]:col-span-2 xl:[&>*:last-child:nth-child(odd)]:col-span-1">
-            <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
+          <section className="dashboard-overview grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:[&>*:last-child:nth-child(odd)]:col-span-2 xl:[&>*:last-child:nth-child(odd)]:col-span-1">
+            <div className="dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Process Status</h2>
                 <CheckCircle className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
@@ -172,7 +173,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
+            <div className="dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Formats Split</h2>
                 <ImageIcon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
@@ -193,7 +194,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
+            <div className="dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Quick Actions</h2>
                 <AlertCircle className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
@@ -212,8 +213,8 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden">
+          <section className="dashboard-activity grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <div className="dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">All Sessions</h2>
               </div>
@@ -235,7 +236,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden">
+            <div className="dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Latest Documents</h2>
               </div>
@@ -260,7 +261,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
+          <section className="dashboard-screens dashboard-surface bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">All Screen Cards</h2>
               <Monitor className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
@@ -282,7 +283,8 @@ export default function DashboardPage() {
                             toast.success('Screen ID copied')
                           }}
                           className="p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-200/50 dark:hover:text-zinc-50 dark:hover:bg-zinc-800/50 rounded-md transition-colors cursor-pointer"
-                          title="Copy URL"
+                          title="Copy screen ID"
+                          aria-label={`Copy ID for ${screen.name}`}
                         >
                           <Copy className="size-4" />
                         </button>
@@ -291,6 +293,7 @@ export default function DashboardPage() {
                           target="_blank"
                           className="p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-200/50 dark:hover:text-zinc-50 dark:hover:bg-zinc-800/50 rounded-md transition-colors cursor-pointer"
                           title="Open Screen"
+                          aria-label={`Open ${screen.name}`}
                         >
                           <ExternalLink className="size-4" />
                         </Link>
