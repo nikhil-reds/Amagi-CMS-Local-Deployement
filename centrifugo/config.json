@@ -3,14 +3,16 @@
     "token": {
       "hmac_secret_key": "set-by-docker-environment"
     },
-    "allowed_origins": ["*"]
+    "allowed_origins": [
+      "*"
+    ]
   },
   "http_api": {
     "key": "set-by-docker-environment"
   },
   "channel": {
     "without_namespace": {
-      "allow_subscribe_for_client": true,
+      "allow_subscribe_for_client": false,
       "allow_publish_for_client": false
     }
   }
