@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/auth'
 import { publishScreenChanged } from '@/lib/realtime'
+import { touchScreen } from '@/lib/screen-snapshot'
 import { assetUrl } from '@/lib/asset-url'
 import { screenIdentifierWhere } from '@/lib/screen-code'
 import { MAX_ASSETS_PER_SCREEN } from '@/lib/screen-assets'
@@ -75,7 +76,7 @@ export async function POST(
         select: { position: true },
       })
 
-      return tx.screenAsset.create({
+      const assigned = await tx.screenAsset.create({
         data: {
           screenId: screen.id,
           documentId: document.id,
@@ -84,14 +85,16 @@ export async function POST(
         },
         include: { document: true },
       })
+      await touchScreen(tx, screen.id)
+      return assigned
     })
 
     if (!asset) {
       return NextResponse.json({ error: `A screen can contain up to ${MAX_ASSETS_PER_SCREEN} items` }, { status: 400 })
     }
 
-    await publishScreenChanged(screen.id)
-    return NextResponse.json(asset, { status: 201 })
+    const realtime = await publishScreenChanged(screen.id)
+    return NextResponse.json({ ...asset, realtime }, { status: 201 })
   } catch (error) {
     console.error('[screen assets POST]', error)
     return NextResponse.json({ error: 'Failed to assign asset to screen' }, { status: 500 })
