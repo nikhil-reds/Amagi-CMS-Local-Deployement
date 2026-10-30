@@ -190,7 +190,9 @@ export default function ScreenPanel() {
       }
 
       setScreens((prev) => prev.filter((screen) => screen.id !== id))
-      toast.success('Screen removed')
+      const result = await res.json()
+      if (result.realtime?.delivered === false) toast.error('Screen removed, but live delivery failed. Reconnect the player.')
+      else toast.success('Screen removed')
     } catch {
       toast.error('Failed to remove screen')
     }
@@ -209,7 +211,9 @@ export default function ScreenPanel() {
           ? { ...screen, assets: (screen.assets || []).filter((asset) => asset.id !== assetId) }
           : screen
       )))
-      toast.success('Asset removed from screen')
+      const result = await res.json()
+      if (result.realtime?.delivered === false) toast.error('Assignment removed, but live delivery failed. Reconnect the player.')
+      else toast.success('Asset removed from screen')
     } catch {
       toast.error('Failed to remove asset')
     }
@@ -243,7 +247,8 @@ export default function ScreenPanel() {
         if (assets.some((item) => item.id === asset.id)) return screen
         return { ...screen, assets: [...assets, asset].sort((a, b) => a.position - b.position) }
       }))
-      toast.success(`Added "${document.name}" to screen`)
+      if (asset.realtime?.delivered === false) toast.error(asset.realtime.error)
+      else toast.success(`Added "${document.name}" to screen`)
     } catch {
       toast.error('Failed to assign asset')
     } finally {
@@ -385,7 +390,7 @@ export default function ScreenPanel() {
   }
 
   return (
-    <section className="order-1 flex h-[44%] min-h-[240px] shrink-0 flex-col md:order-2 md:h-auto md:min-h-0 md:min-w-0 md:flex-1 rounded-2xl bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-lg shadow-blue-950/10 dark:shadow-black/40 flex flex-col overflow-hidden">
+    <section data-screen-panel className="order-1 flex h-[44%] min-h-[240px] shrink-0 flex-col md:order-2 md:h-auto md:min-h-0 md:min-w-0 md:flex-1 rounded-2xl bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-lg shadow-blue-950/10 dark:shadow-black/40 flex flex-col overflow-hidden">
       <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-100 dark:border-zinc-800 shrink-0 flex items-center justify-between">
         <h2 className="text-xs font-semibold text-gray-400 dark:text-zinc-500 tracking-widest uppercase">
           Screens
@@ -410,7 +415,7 @@ export default function ScreenPanel() {
             <p className="text-xs">Add a screen to track display endpoints.</p>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-1 md:overflow-visible md:pb-0 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 md:gap-4 lg:gap-5" data-autoscroll>
+          <div className="main-screen-grid flex gap-3 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-1 md:overflow-visible md:pb-0 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 md:gap-4 lg:gap-5" data-autoscroll>
             {screens.map((screen) => {
               const assets = screen.assets || []
               const primaryAsset = assets[0]
@@ -437,7 +442,7 @@ export default function ScreenPanel() {
                       : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-600 hover:shadow-sm'
                   }`}
                 >
-                  <div className="absolute inset-0">
+                  <div className="main-screen-preview absolute inset-0">
                     {primaryAsset ? (
                       <AssetPreview key={primaryAsset.id + primaryAsset.documentId} document={primaryAsset.document} />
                     ) : (
@@ -448,7 +453,7 @@ export default function ScreenPanel() {
                     )}
                   </div>
 
-                  <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 max-sm:flex-col-reverse max-sm:items-stretch bg-gradient-to-b from-white/95 dark:from-zinc-900/95 to-white/0 dark:to-zinc-900/0 p-2.5 sm:p-4">
+                  <div className="main-screen-card-heading absolute inset-x-0 top-0 flex items-start justify-between gap-2 max-sm:flex-col-reverse max-sm:items-stretch bg-gradient-to-b from-white/95 dark:from-zinc-900/95 to-white/0 dark:to-zinc-900/0 p-2.5 sm:p-4">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-zinc-950 dark:text-zinc-100">{screen.name}</p>
                       <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -497,7 +502,7 @@ export default function ScreenPanel() {
                   ) : null}
 
                   {assets.length > 0 ? (
-                    <div className="absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/85 via-black/65 to-transparent p-2.5 pt-12 sm:p-4 sm:pt-14">
+                    <div className="main-screen-playlist absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/85 via-black/65 to-transparent p-2.5 pt-12 sm:p-4 sm:pt-14">
                       {assets.map((asset, index) => (
                         <div key={asset.id} className="flex items-center gap-2 rounded-md bg-black/20 px-1.5 py-1 text-white">
                           <span className="grid size-4 shrink-0 place-items-center rounded-full bg-white/20 text-[9px] font-bold">{index + 1}</span>
@@ -523,7 +528,7 @@ export default function ScreenPanel() {
 
       {/* "Assign to screen" picker for a document chosen in the Documents panel. */}
       <Sheet open={pickDocument !== null} onOpenChange={(open) => !open && setPickDocument(null)}>
-        <SheetContent side="bottom" className="mx-auto gap-0 p-0 sm:max-w-lg">
+        <SheetContent data-main-screen-sheet side="bottom" className="mx-auto gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="p-4 pr-12">
             <SheetTitle className="truncate">Assign to screen</SheetTitle>
             <SheetDescription className="truncate">{pickDocument?.name}</SheetDescription>
@@ -554,7 +559,7 @@ export default function ScreenPanel() {
 
       {/* Add a file from the device or a link to one screen (no dragging needed). */}
       <Sheet open={addTargetId !== null} onOpenChange={(open) => !open && setAddTargetId(null)}>
-        <SheetContent side="bottom" className="mx-auto gap-0 p-0 sm:max-w-lg">
+        <SheetContent data-main-screen-sheet side="bottom" className="mx-auto gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="p-4 pr-12">
             <SheetTitle>Add to {screens.find((screen) => screen.id === addTargetId)?.name ?? 'screen'}</SheetTitle>
             <SheetDescription>Upload a photo, video or file, or paste a link.</SheetDescription>
