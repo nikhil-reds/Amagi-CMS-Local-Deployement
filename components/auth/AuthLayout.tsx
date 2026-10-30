@@ -15,7 +15,7 @@ export default function AuthLayout({ title, description, children, footer }: Aut
     <div className="relative grid min-h-dvh bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] lg:grid-cols-[1.05fr_1fr]">
       <BrandPanel />
 
-      <main className="relative flex items-center justify-center px-3 py-6 sm:px-8 sm:py-10 pb-safe">
+      <main className="auth-content relative flex items-center justify-center px-4 py-6 sm:px-8 sm:py-10">
         <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/85 p-5 shadow-2xl shadow-blue-950/20 backdrop-blur-xl min-[400px]:p-8 sm:p-10">
           <BrandLogo className="mb-8 lg:hidden [&_p]:text-zinc-950!" />
 
