@@ -79,6 +79,12 @@ body {
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
 
+.auth-content { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+@media (pointer: coarse) {
+  .auth-content input:not([type="checkbox"]) { min-height: 44px; font-size: 16px; }
+  .auth-content label:has(input[type="checkbox"]) { min-height: 44px; }
+}
+
 /* Centres page content and stops it stretching on very wide monitors. */
 .container-page {
   width: 100%;
