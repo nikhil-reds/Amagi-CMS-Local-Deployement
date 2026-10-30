@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireRole } from '@/lib/auth'
+import { requireRole, getCurrentUser } from '@/lib/auth'
+import { validControlSession } from '@/lib/realtime-token'
+import { screenSnapshot, touchScreen } from '@/lib/screen-snapshot'
+import { publishScreenChanged } from '@/lib/realtime'
 import { screenIdentifierWhere } from '@/lib/screen-code'
 import { controlsWithDefaults, mediaKind, mediaPosition, validateControlPatch } from '@/lib/media-controls'
 import { requestOrigin, reachableAssetUrl } from '@/lib/request-origin'
-import { assetUrl } from '@/lib/asset-url'
 
 type Context = { params: Promise<{ screenId: string }> }
 export async function GET(_request: NextRequest, { params }: Context) {
   try {
     const { screenId } = await params
-    const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), include: { assets: { orderBy: { position: 'asc' }, include: { document: true } } } })
-    if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
+    const snapshot = await screenSnapshot(screenId)
+    if (!snapshot) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
     const origin = requestOrigin(_request)
-    const assets = await Promise.all(screen.assets.map(async (asset) => ({
-      id: asset.id, kind: mediaKind(asset.document), controls: controlsWithDefaults(asset.controls),
-      document: { id: asset.document.id, name: asset.document.name, mimeType: asset.document.mimeType, sourceType: asset.document.sourceType, websiteUrl: asset.document.websiteUrl, s3Url: asset.document.mimeType === 'application/pdf' ? new URL(`/api/screens/${screen.code}/pdf/${asset.id}`, origin).href : reachableAssetUrl(await assetUrl(asset.document), origin) },
-    })))
-    return NextResponse.json({ id: screen.id, code: screen.code, name: screen.name, assets }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({ ...snapshot, assets: snapshot.assets.map(asset => ({ ...asset, document: { ...asset.document, s3Url: reachableAssetUrl(asset.document.s3Url, origin) } })) }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[controls GET]', error)
     return NextResponse.json({ error: 'Unable to load screen controls' }, { status: 500 })
@@ -33,6 +31,8 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   try {
     const screen = await prisma.screen.findUnique({ where: screenIdentifierWhere(screenId), select: { id: true } })
     if (!screen) return NextResponse.json({ error: 'Screen not found' }, { status: 404 })
+    const user = await getCurrentUser()
+    if (!user || !validControlSession(request.headers.get('x-control-session'), user.id, screen.id)) return NextResponse.json({ error: 'Connect to this screen before changing controls. Sessions expire after five minutes.' }, { status: 403 })
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await prisma.$transaction(async tx => {
@@ -48,10 +48,12 @@ export async function PATCH(request: NextRequest, { params }: Context) {
             if (patch.paused === false) next.autoplay = true
           }
           await tx.screenAsset.update({ where: { id: asset.id }, data: { controls: next } })
+          await touchScreen(tx, screen.id)
           return { assetId: asset.id, controls: next }
         }, { isolationLevel: 'Serializable' })
         if (!result) return NextResponse.json({ error: 'Item is not assigned to this screen' }, { status: 404 })
-        return NextResponse.json(result)
+        const realtime = await publishScreenChanged(screen.id, 'controls.updated')
+        return NextResponse.json({ ...result, realtime })
       } catch (error) {
         if ((error as { code?: string }).code === 'P2034' && attempt < 2) continue
         throw error
