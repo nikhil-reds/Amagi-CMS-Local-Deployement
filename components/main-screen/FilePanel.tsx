@@ -62,15 +62,15 @@ export default function FilePanel() {
   }, [documents, searchTerm])
 
   return (
-    <aside className="order-2 min-h-0 w-full flex-1 md:order-1 md:w-72 md:flex-none lg:w-80 3xl:w-96 rounded-2xl bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-lg shadow-blue-950/10 dark:shadow-black/40 flex flex-col overflow-hidden">
+    <aside data-screen-library className="order-2 min-h-0 w-full flex-1 md:order-1 md:w-72 md:flex-none lg:w-80 3xl:w-96 rounded-2xl bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-lg shadow-blue-950/10 dark:shadow-black/40 flex flex-col overflow-hidden">
       <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-100 dark:border-zinc-800 space-y-3 sm:space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-xs font-semibold text-gray-400 dark:text-zinc-400 tracking-widest uppercase">
-              Documents
+              Library
             </h2>
             <p className="mt-1 text-sm font-semibold text-gray-950 dark:text-zinc-50">
-              All uploaded files
+              Files ready for your screens
             </p>
           </div>
           <span className="rounded-full bg-gray-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:text-zinc-300">
@@ -83,7 +83,8 @@ export default function FilePanel() {
           <input
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search documents"
+            placeholder="Search files"
+            aria-label="Search library files"
             className="h-11 md:h-10 w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 pl-9 pr-3 text-sm text-gray-900 dark:text-zinc-100 outline-none transition focus:border-gray-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-950"
           />
         </label>
@@ -185,6 +186,7 @@ export default function FilePanel() {
           </div>
         )}
       </div>
+      <p className="main-screen-library-hint">Drag a file onto a screen, or use the assign button to choose a screen.</p>
     </aside>
   )
 }
