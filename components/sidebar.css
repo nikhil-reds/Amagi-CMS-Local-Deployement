@@ -1,0 +1,53 @@
+/* Shared navigation, matching the supplied Multimedia Console sidebar. */
+.console-sidebar-desktop { padding: 16px 0 16px 12px; background: #161616; border: 0; }
+.console-sidebar-rail { background: #080808; border-color: #ffffff0e; }
+.console-sidebar {
+  color-scheme: dark;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 12px 12px 14px;
+  border: 1px solid #ffffff08;
+  border-radius: 24px 0 0 24px;
+  background: #080808;
+  color: #fff;
+  font-family: var(--font-abro-sans),system-ui,sans-serif;
+}
+.console-sidebar-brand { flex: none; padding: 0 6px 18px; }
+.console-sidebar-logo { display: flex; align-items: center; width: 125px; height: 35px; }
+.console-sidebar-logo img { display: block; width: 100%; height: auto; object-fit: contain; }
+.console-sidebar-title { margin: 14px 0 0; color: #fff; font-size: 14px; font-weight: 400; line-height: 1.25; letter-spacing: -.02em; }
+.console-sidebar-description { margin: 8px 0 0; color: #ffffff70; font-size: 12px; font-weight: 400; line-height: 1.5; }
+.console-sidebar-nav { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; padding: 4px 0 16px; scrollbar-width: thin; scrollbar-color: #ffffff20 transparent; }
+.console-sidebar-link { display: flex; align-items: center; flex: none; gap: 11px; height: 34px; padding: 0 12px; border-radius: 11px; color: #ffffff80; font-size: 13.5px; line-height: 1; font-weight: 400; text-decoration: none; transition: background-color .16s,color .16s; }
+.console-sidebar-link > svg { width: 15px; height: 15px; flex: none; stroke-width: 1.6; }
+.console-sidebar-link:hover { background: #ffffff0e; color: #fff; }
+.console-sidebar-link-active, .console-sidebar-link-active:hover { background: #fff; color: #000; }
+.console-sidebar-bottom { flex: none; padding: 0 4px; }
+.console-sidebar-download { display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 12px; border: 1px solid #ffffff12; border-radius: 15px; background: #131313; color: #fff; text-decoration: none; transition: background-color .16s; }
+.console-sidebar-download:hover { background: #1d1d1d; }
+.console-sidebar-download > svg { flex: none; width: 16px; height: 16px; stroke-width: 1.5; }
+.console-sidebar-download b { display: block; font-size: 13px; font-weight: 400; line-height: 1.4; }
+.console-sidebar-download small { display: block; margin-top: 4px; color: #ffffff70; font-size: 12px; line-height: 1.7; }
+.console-sidebar-account { display: flex; align-items: center; gap: 8px; min-height: 52px; margin-top: 8px; padding: 12px 2px 0; border-top: 1px solid #ffffff0d; }
+.console-sidebar-profile { display: flex; align-items: center; flex: 1; min-width: 0; gap: 10px; }
+.console-sidebar-avatar { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: #ffffff12; color: #fff; font-size: 13px; font-weight: 400; }
+.console-sidebar-profile > div:last-child { flex: 1; min-width: 0; }
+.console-sidebar-profile p:first-child { color: #fff; font-size: 12px; font-weight: 400; line-height: 1.4; }
+.console-sidebar-profile p:last-child { margin-top: 2px; color: #ffffff65; font-size: 11px; line-height: 1.4; }
+.console-sidebar-logout { display: grid; place-items: center; flex: none; width: 30px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #ffffff80; cursor: pointer; }
+.console-sidebar-logout:hover { background: #ffffff0e; color: #fff; }
+.console-sidebar-logout:disabled { cursor: wait; opacity: .6; }
+.console-sidebar-logout > svg { width: 15px; height: 15px; stroke-width: 1.5; }
+.console-sidebar :is(a,button):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.console-sidebar-compact { padding: 16px 8px; border-radius: 0; }
+.console-sidebar-compact .console-sidebar-brand { padding: 0 0 18px; }
+.console-sidebar-compact .console-sidebar-logo { width: 100%; height: 32px; font-size: 9px; }
+.console-sidebar-compact .console-sidebar-link { justify-content: center; padding: 0; height: 40px; }
+.console-sidebar-compact .console-sidebar-bottom { padding: 0; }
+.console-sidebar-compact .console-sidebar-download { min-height: 42px; padding: 10px; justify-content: center; border-radius: 12px; }
+.console-sidebar-compact .console-sidebar-account { justify-content: center; }
+@media (max-width: 767px) { .console-sidebar { border-radius: 0 24px 24px 0; padding-top: 20px; } }
+@media (prefers-reduced-motion: reduce) { .console-sidebar * { transition: none !important; } }
