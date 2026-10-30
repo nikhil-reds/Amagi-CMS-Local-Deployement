@@ -72,10 +72,16 @@
     }
     .link { background: none; border: 0; padding: 0; color: #a1a1aa; font: inherit; cursor: pointer; text-decoration: underline; }
     [hidden] { display: none !important; }
+    .action-icon { display: inline-block; width: 24px; margin-right: 10px; font-size: 22px; vertical-align: middle; }
   </style>
 </head>
 <body>
   <div class="backdrop">
+    <section class="modal" id="playerActions" role="dialog" aria-modal="true" aria-labelledby="actionsTitle" hidden>
+      <h1 id="actionsTitle">Player controls</h1>
+      <button type="button" class="close-button" id="actionClose"><span class="action-icon" aria-hidden="true">✕</span>Close player</button>
+      <button type="button" class="close-button" id="actionFullscreen"><span class="action-icon" aria-hidden="true">⛶</span>Full screen</button>
+    </section>
     <form class="modal" id="form" autocomplete="off">
       <h1 id="modalTitle">Enter Screen ID</h1>
       <p class="hint" id="modalHint">The content assigned to this screen will play full screen.</p>
@@ -113,12 +119,25 @@
     const errorBox = document.getElementById('error')
     const escHint = document.getElementById('escHint')
     let canCancel = false
+    const actions = document.getElementById('playerActions')
+    window.player.onActions(() => {
+      form.hidden = true
+      actions.hidden = false
+      document.getElementById('actionClose').focus()
+    })
+    document.getElementById('actionClose').addEventListener('click', () => window.player.quit())
+    document.getElementById('actionFullscreen').addEventListener('click', () => window.player.fullscreen())
+    document.querySelector('.backdrop').addEventListener('click', (event) => {
+      if (event.target === event.currentTarget && !actions.hidden) window.player.dismissActions()
+    })
 
     function showServerField(show) {
       serverField.hidden = !show
     }
 
     window.player.onShow((state) => {
+      actions.hidden = true
+      form.hidden = false
       canCancel = state.canCancel
       modalTitle.textContent = canCancel ? 'Reset screen' : 'Enter Screen ID'
       modalHint.textContent = canCancel ? 'Change the screen assignment or close the player.' : 'The content assigned to this screen will play full screen.'
@@ -162,6 +181,11 @@
     })
 
     document.addEventListener('keydown', (event) => {
+      if (!actions.hidden && event.key === 'Escape') { window.player.dismissActions(); return }
+      if (!actions.hidden && event.key === 'Tab') {
+        event.preventDefault()
+        document.getElementById(document.activeElement.id === 'actionClose' ? 'actionFullscreen' : 'actionClose').focus()
+      }
       if (event.key === 'Escape' && canCancel) window.player.cancel()
     })
   </script>
