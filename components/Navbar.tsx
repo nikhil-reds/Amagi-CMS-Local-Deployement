@@ -15,9 +15,6 @@ export default function Navbar({ menuControl }: NavbarProps) {
         {menuControl}
         <div className="console-navbar-brand min-w-0">
           <p className="truncate text-sm font-bold text-zinc-950 dark:text-zinc-50">Amagi Multimedia</p>
-          <p className="hidden truncate text-xs font-medium text-zinc-500 dark:text-zinc-400 sm:block">
-            Streaming media management
-          </p>
         </div>
       </div>
 
