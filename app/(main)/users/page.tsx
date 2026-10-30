@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react"
 import { toast } from "sonner"
+import "./users.css"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -181,39 +182,38 @@ export default function UsersPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[linear-gradient(to_top,#0a0f34_0%,#000f93_22%,#6e6eff_52%,#e1e1ff_78%,#ffffff_100%)] dark:bg-[linear-gradient(to_top,#050f64_0%,#0a0f34_50%,#323243_100%)] px-3 py-5 sm:px-5 sm:py-8 lg:px-8 lg:py-10">
-      <div className="container-page">
-        <section className="mb-7 flex flex-col gap-5 border-b border-zinc-200 dark:border-zinc-800 pb-7 lg:flex-row lg:items-end lg:justify-between">
+    <main className="users-page" data-users-ui>
+      <div className="users-content">
+        <section className="users-header">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Workspace access</p>
             <h1 className="text-3xl font-semibold tracking-[-0.035em] text-zinc-900 dark:text-zinc-100">Users</h1>
-            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Manage who can access the Amagi Multimedia workspace.</p>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Manage your members and their workspace access.</p>
           </div>
-          <Button onClick={() => setIsAddOpen(true)} className="h-11 w-full gap-2 rounded-xl bg-black text-white dark:bg-white dark:text-black px-5 text-sm font-semibold hover:bg-zinc-900 dark:hover:bg-zinc-200 sm:h-10 sm:w-auto">
+          <Button onClick={() => setIsAddOpen(true)} className="users-add">
             <Plus className="size-4" />
             Add user
           </Button>
         </section>
 
-        <section className="mb-6 grid gap-4 md:grid-cols-3">
+        <section className="users-stats" aria-label="Workspace roles">
           <Metric icon={Users} label="Total users" value={String(users.length)} detail="People with workspace access" />
           <Metric icon={ShieldCheck} label="Administrators" value={String(admins)} detail="Can manage users and permissions" />
           <Metric icon={UserCheck} label="Editors" value={String(editors)} detail="Can manage media and screens" />
         </section>
 
-        <section className="overflow-visible rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-4 border-b border-zinc-200 dark:border-zinc-800 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <section aria-label="Workspace members" className="users-members overflow-visible rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+          <div className="users-tools flex flex-col gap-4 border-b border-zinc-200 dark:border-zinc-800 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Workspace members</h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Roles control access to workspace management features.</p>
             </div>
             <label className="flex h-10 w-full items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-3 text-zinc-500 dark:text-zinc-400 sm:w-[270px]">
               <Search className="size-4" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search users" className="w-full bg-transparent text-sm text-zinc-700 dark:text-zinc-300 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email or role" aria-label="Search users" className="w-full bg-transparent text-sm text-zinc-700 dark:text-zinc-300 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
             </label>
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[800px] text-left">
               <thead className="bg-zinc-50 dark:bg-zinc-900 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
                 <tr>
@@ -241,8 +241,8 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <label className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold ${roleClass(user.role)}`}>
-                        <select value={user.role} onChange={(event) => void updateUser(user.id, { role: event.target.value as Role })} className="appearance-none bg-transparent pr-1 outline-none [&>option]:bg-white dark:[&>option]:bg-zinc-900">
+                      <label className={`users-role inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold ${roleClass(user.role)}`}>
+                        <select aria-label={`Role for ${user.name}`} value={user.role} onChange={(event) => void updateUser(user.id, { role: event.target.value as Role })} className="appearance-none bg-transparent pr-1 outline-none [&>option]:bg-white dark:[&>option]:bg-zinc-900">
                           {roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
                         </select>
                         <ChevronDown className="size-3 opacity-70" />
@@ -251,11 +251,11 @@ export default function UsersPage() {
                     <td className="px-5 py-4 text-sm text-zinc-500 dark:text-zinc-400">{formatDate(user.lastLoginAt)}</td>
                     <td className="px-5 py-4 text-sm text-zinc-500 dark:text-zinc-400">{formatDate(user.createdAt)}</td>
                     <td className="relative px-5 py-4 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => setOpenMenu((current) => current === user.id ? null : user.id)} className="size-8 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white">
+                      <Button variant="ghost" size="icon" aria-label={`Actions for ${user.name}`} onClick={() => setOpenMenu((current) => current === user.id ? null : user.id)} className="size-8 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white">
                         <MoreHorizontal className="size-4" />
                       </Button>
                       {openMenu === user.id && (
-                        <div className="absolute right-5 top-12 z-10 w-44 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-1.5 text-left shadow-lg">
+                        <div className="users-actions-menu absolute right-5 top-12 z-10 w-44 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-1.5 text-left shadow-lg">
                           <button onClick={() => void resetPassword(user)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900"><KeyRound className="size-3.5" />Reset password</button>
                           <button onClick={() => void removeUser(user)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="size-3.5" />Remove user</button>
                         </div>
@@ -266,7 +266,7 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800 md:hidden">
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800 xl:hidden">
             {isLoading ? (
               <p className="px-5 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading workspace members…</p>
             ) : visibleUsers.length === 0 ? (
@@ -281,7 +281,7 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div><p className="mb-1 text-zinc-500 dark:text-zinc-400">Role</p><label className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold ${roleClass(user.role)}`}><select value={user.role} onChange={(event) => void updateUser(user.id, { role: event.target.value as Role })} className="appearance-none bg-transparent pr-1 outline-none [&>option]:bg-white dark:[&>option]:bg-zinc-900">{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select><ChevronDown className="size-3 opacity-70" /></label></div>
+                  <div><p className="mb-1 text-zinc-500 dark:text-zinc-400">Role</p><label className={`users-role inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold ${roleClass(user.role)}`}><select aria-label={`Role for ${user.name}`} value={user.role} onChange={(event) => void updateUser(user.id, { role: event.target.value as Role })} className="appearance-none bg-transparent pr-1 outline-none [&>option]:bg-white dark:[&>option]:bg-zinc-900">{roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select><ChevronDown className="size-3 opacity-70" /></label></div>
                   <div><p className="mb-1 text-zinc-500 dark:text-zinc-400">Last active</p><p className="font-medium text-zinc-500 dark:text-zinc-400">{formatDate(user.lastLoginAt)}</p></div>
                 </div>
                 <div className="flex gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-3">
@@ -295,7 +295,7 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-[520px] border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-0 text-zinc-900 dark:text-zinc-100">
+        <DialogContent data-users-dialog className="max-w-[520px] border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-0 text-zinc-900 dark:text-zinc-100">
           <form onSubmit={createUser}>
             <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 px-6 py-5">
               <DialogTitle className="text-xl">Add user</DialogTitle>
