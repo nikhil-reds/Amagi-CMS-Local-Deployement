@@ -25,93 +25,71 @@
     const root = document.body
     let longPressTimer = null
 
-    function startLongPress() {
-      if (!window.player?.reset) return
-      longPressTimer = setTimeout(() => window.player.reset(), 1200)
+    let pressPosition = null
+    function startLongPress(event) {
+      cancelLongPress()
+      if (event.button !== 0 || !event.isPrimary) return
+      pressPosition = { x: event.clientX, y: event.clientY }
+      longPressTimer = setTimeout(() => { cancelLongPress(); window.player?.actions() }, 800)
     }
 
     function cancelLongPress() {
       if (longPressTimer) clearTimeout(longPressTimer)
       longPressTimer = null
+      pressPosition = null
     }
 
     document.addEventListener('pointerdown', startLongPress)
     document.addEventListener('pointerup', cancelLongPress)
     document.addEventListener('pointercancel', cancelLongPress)
     document.addEventListener('pointerleave', cancelLongPress)
+    document.addEventListener('pointermove', (event) => {
+      if (pressPosition && Math.hypot(event.clientX - pressPosition.x, event.clientY - pressPosition.y) > 12) cancelLongPress()
+    })
+    window.addEventListener('blur', cancelLongPress)
+    document.addEventListener('contextmenu', (event) => {
+      event.preventDefault()
+      cancelLongPress()
+      window.player?.actions()
+    })
 
     function el(tag, props) {
       return Object.assign(document.createElement(tag), props)
     }
 
-    // Screensaver: the TR logo in a circle drifts in a random direction and bounces off the
-    // screen edges. Throttled to ~30fps and transform-only so it stays light on the CPU.
-    function screensaver() {
-      const logo = el('div', { className: 'logo' })
-      logo.append(el('img', { src: 'icon.png', alt: 'TR' }))
-      root.append(logo)
-
-      const size = 220
-      const speed = 140 // px per second
-      let x = Math.random() * Math.max(1, innerWidth - size)
-      let y = Math.random() * Math.max(1, innerHeight - size)
-      let angle = Math.random() * Math.PI * 2
-      let vx = Math.cos(angle) * speed
-      let vy = Math.sin(angle) * speed
-      let last = performance.now()
-
-      // Nudge the heading a little after each bounce so the path never settles into a loop.
-      function jitter() {
-        const a = Math.atan2(vy, vx) + (Math.random() - 0.5) * 0.5
-        vx = Math.cos(a) * speed
-        vy = Math.sin(a) * speed
-      }
-
-      function frame(now) {
-        requestAnimationFrame(frame)
-        const dt = now - last
-        if (dt < 33) return
-        last = now
-        const step = Math.min(dt, 100) / 1000
-        x += vx * step
-        y += vy * step
-        const maxX = innerWidth - size
-        const maxY = innerHeight - size
-        if (x <= 0) { x = 0; vx = Math.abs(vx); jitter(); vx = Math.abs(vx) }
-        else if (x >= maxX) { x = maxX; vx = -Math.abs(vx); jitter(); vx = -Math.abs(vx) }
-        if (y <= 0) { y = 0; vy = Math.abs(vy); jitter(); vy = Math.abs(vy) }
-        else if (y >= maxY) { y = maxY; vy = -Math.abs(vy); jitter(); vy = -Math.abs(vy) }
-        logo.style.transform = `translate(${x}px, ${y}px)`
-      }
-      requestAnimationFrame(frame)
-    }
-
     const stages = new Map()
-    function renderItem(item) {
-      const panel = el('section', { className: 'panel', ariaLabel: item.name })
-      if (['pdf', 'video', 'image', 'website', 'audio'].includes(item.kind)) {
-        const stage = window.MediaRuntime.mount(panel, item, { kiosk: true })
-        if (item.id) stages.set(item.id, stage)
-      } else {
-        const box = el('div', { className: 'center' })
-        box.append(el('p', { textContent: item.name || 'Unsupported file type.' }))
-        panel.append(box)
+    const layout = el('main', { className: 'layout' })
+    let emptyMessage = null
+    function updateScreen(snapshot) {
+      const assets = snapshot.assets || []
+      const keep = new Set(assets.map(asset => asset.id))
+      for (const [id, entry] of stages) {
+        if (!keep.has(id)) { entry.stage?.destroy(); entry.panel.remove(); stages.delete(id) }
       }
-      return panel
-    }
-    window.player?.onControls?.((assets) => {
-      assets.forEach(asset => stages.get(asset.id)?.update(asset.controls))
-    })
-
-    if (kind === 'layout') {
-      const items = JSON.parse(params.get('items') || '[]')
-      const layout = el('main', { className: 'layout' })
+      emptyMessage?.remove(); emptyMessage = null
       layout.style.gridTemplateColumns = 'minmax(0, 1fr)'
-      layout.style.gridTemplateRows = `repeat(${items.length}, minmax(0, 1fr))`
-      items.forEach((item) => layout.append(renderItem(item)))
+      layout.style.gridTemplateRows = `repeat(${Math.max(1, assets.length)}, minmax(0, 1fr))`
+      assets.forEach(asset => {
+        const item = { id: asset.id, kind: asset.kind, name: asset.document.name, src: asset.document.websiteUrl || asset.document.s3Url, controls: asset.controls }
+        const key = JSON.stringify([item.kind, item.src])
+        let entry = stages.get(item.id)
+        if (entry && entry.key !== key) { entry.stage?.destroy(); entry.panel.remove(); stages.delete(item.id); entry = null }
+        if (!entry) {
+          const panel = el('section', { className: 'panel', ariaLabel: item.name })
+          let stage
+          if (['pdf', 'video', 'image', 'website', 'audio'].includes(item.kind)) stage = window.MediaRuntime.mount(panel, item, { kiosk: true })
+          else { const box = el('div', { className: 'center' }); box.append(el('p', { textContent: item.name || 'Unsupported file type.' })); panel.append(box) }
+          entry = { key, panel, stage }; stages.set(item.id, entry)
+        } else entry.stage?.update(item.controls)
+        const position = assets.findIndex(asset => asset.id === item.id)
+        if (layout.children[position] !== entry.panel) layout.insertBefore(entry.panel, layout.children[position] || null)
+      })
+      if (!assets.length) { emptyMessage = el('div', { className: 'center' }); emptyMessage.append(el('p', { textContent: 'No media assigned to this screen.' })); layout.append(emptyMessage) }
+    }
+    window.player?.onScreen?.(updateScreen)
+    if (kind === 'layout') {
       root.append(layout)
-    } else if (kind === 'saver') {
-      screensaver()
+      updateScreen({ assets: [] })
     } else if (kind === 'image') {
       root.append(el('img', { src, alt: name }))
     } else if (kind === 'video') {
