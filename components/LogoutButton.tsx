@@ -35,10 +35,10 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
   }
 
   return (
-    <div className="space-y-2">
+    <div className="console-sidebar-account">
       {user && !compact ? (
-        <div className="flex items-center gap-3 px-1">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-700 text-xs font-bold text-white">
+        <div className="console-sidebar-profile">
+          <div className="console-sidebar-avatar">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -54,10 +54,10 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
         disabled={signingOut}
         title="Log out"
         aria-label="Log out"
-        className="flex h-10 w-full justify-center items-center gap-3 rounded-lg px-3 text-sm font-semibold bg-red-600 text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+        className="console-sidebar-logout"
       >
         {signingOut ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
-        {!compact && <span>{signingOut ? "Logging out…" : "Log out"}</span>}
+        <span className="sr-only">{signingOut ? "Logging out…" : "Log out"}</span>
       </button>
     </div>
   )
