@@ -1,20 +1,10 @@
 const { app, BaseWindow, WebContentsView, Menu, ipcMain, net, shell } = require('electron')
 const fs = require('fs')
 const path = require('path')
-const { Readable } = require('stream')
-const { pipeline } = require('stream/promises')
-const { pathToFileURL } = require('url')
-const { Centrifuge } = require('centrifuge')
+const { connectScreen } = require('./screen-connection.cjs')
 
-// Media files are fetched only when assignments change. Control settings use lightweight polling. The player syncs what is assigned to its screen ONCE per
-// launch, saves it to local disk, and plays from the local copy. If the server cannot be
-// reached it plays the last saved copy. While running it holds one idle connection to Ably
-// (realtime service, not the CMS); when content changes in the CMS, Ably delivers a
-// "changed" nudge and the player does the same one-time sync again, swapping the content in
-// only once the new file is fully downloaded.
+// One initial snapshot followed by Centrifugo publications only.
 const REQUEST_TIMEOUT_MS = 20_000
-// Wait this long after a nudge so a burst of changes collapses into a single sync.
-const SYNC_DEBOUNCE_MS = 2_500
 
 let win = null
 let contentView = null
@@ -70,220 +60,40 @@ function normalizeServerUrl(value) {
   }
 }
 
-// ── Content: fetch once, save locally, play from disk ─────────────────────────
-
-const cacheDir = () => path.join(app.getPath('userData'), 'content')
-const manifestPath = () => path.join(cacheDir(), 'manifest.json')
-
-async function fetchJson(url) {
-  const response = await net.fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+// ── Live content: no polling or cached/offline fallback ───────────────────────
+let stopConnection = null
+let latestSnapshot = null
+function show(params) {
+  contentView.webContents.loadFile(path.join(__dirname, 'player.html'), { search: new URLSearchParams(params).toString() })
+}
+async function fetchJson(url, signal) {
+  const response = await net.fetch(url, { cache: 'no-store', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
   if (!response.ok) {
-    const error = new Error(`HTTP ${response.status}`)
-    error.status = response.status
-    throw error
+    const error = new Error(`HTTP ${response.status}`); error.status = response.status; throw error
   }
   return response.json()
 }
-
-function extensionFor(asset) {
-  const fromName = path.extname(asset.name || '')
-  if (fromName) return fromName.toLowerCase()
-  const sub = String(asset.mimeType || '').split('/')[1] || 'bin'
-  return `.${sub.split(/[;+]/)[0]}`
-}
-
-async function downloadTo(url, file) {
-  let response
-  try {
-    response = await net.fetch(url, { signal: AbortSignal.timeout(10 * 60_000) })
-  } catch (error) {
-    throw new Error(`MinIO download failed: ${error?.message || error}`)
-  }
-  if (!response.ok || !response.body) throw new Error(`MinIO download failed: HTTP ${response.status}`)
-  const partial = `${file}.part`
-  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(partial))
-  fs.renameSync(partial, file)
-}
-
-// Save every assigned item in display order. Retain legacy manifests for upgrades.
-async function syncContent({ serverUrl, screenId }) {
-  const snapshot = await fetchJson(`${serverUrl}/api/screens/${encodeURIComponent(screenId)}/controls`)
-  const assignments = snapshot.assets
-  const assets = assignments.map(({ id, controls, document: doc }) => ({
-    id, controls,
-    name: doc.name,
-    mimeType: doc.mimeType,
-    sourceType: doc.sourceType,
-    websiteUrl: doc.websiteUrl,
-    url: doc.websiteUrl || doc.s3Url,
-  }))
-  fs.mkdirSync(cacheDir(), { recursive: true })
-  fs.writeFileSync(manifestPath(), JSON.stringify({ screenId, assets }))
-  return assets
-}
-
-function readSavedContent(screenId) {
-  const manifest = readJson(manifestPath())
-  if (manifest.screenId !== screenId) return undefined
-  const assets = Array.isArray(manifest.assets)
-    ? manifest.assets
-    : 'asset' in manifest ? (manifest.asset ? [manifest.asset] : []) : undefined
-  if (assets?.some((asset) => asset.file && !fs.existsSync(asset.file))) return undefined
-  return assets
-}
-
-function show(params) {
-  const query = new URLSearchParams(params).toString()
-  contentView.webContents.loadFile(path.join(__dirname, 'player.html'), { search: query })
-}
-
-function showAsset(assets) {
-  if (!assets?.length) return show({ kind: 'saver' })
-  const items = assets.map((asset) => {
-    const mime = asset.mimeType || ''
-    const kind = asset.websiteUrl || asset.sourceType === 'WEBSITE' ? 'website'
-      : mime.startsWith('image/') ? 'image'
-      : mime.startsWith('video/') ? 'video'
-      : mime.startsWith('audio/') ? 'audio'
-      : mime === 'application/pdf' ? 'pdf'
-      : 'message'
-    return {
-      id: asset.id,
-      controls: asset.controls || {},
-      kind,
-      name: asset.name || '',
-      src: asset.url || (asset.file ? pathToFileURL(asset.file).href : ''),
-    }
-  })
-  show({ kind: 'layout', items: JSON.stringify(items) })
-}
-
-let lastShownKey = null
-let syncing = false
-let syncQueued = false
-let lastSyncOk = false
-
-function assetKey(asset) {
-  return JSON.stringify(asset || null)
-}
-
-// Sync once, then play from local. Used on launch (live = false) and when Ably says the
-// content changed (live = true). A live sync never replaces what is playing with an error,
-// and skips the reload when nothing actually changed.
-async function loadScreen(live = false) {
-  if (syncing) {
-    syncQueued = true
-    return
-  }
-  syncing = true
-  const target = current
-  try {
-    let asset
-    try {
-      asset = await syncContent(target)
-      lastSyncOk = true
-    } catch (error) {
-      lastSyncOk = false
-      console.error('Sync failed, using saved copy', error)
-      if (live) return
-      asset = readSavedContent(target.screenId)
-      if (asset === undefined) {
-        lastShownKey = null
-        return show({ kind: 'message', text: `Could not load content. ${error?.message || 'No saved copy is available.'} Press Ctrl+R to try again.` })
-      }
-    }
-    if (current !== target) return // screen was switched while syncing
-    if (live && assetKey(asset) === lastShownKey) return
-    lastShownKey = assetKey(asset)
-    showAsset(asset)
-  } finally {
-    syncing = false
-    if (syncQueued) {
-      syncQueued = false
-      loadScreen(true)
-    }
-  }
-}
-
-// Small control snapshots are fetched separately from media. Never reload files for a
-// playback setting change, and stop the old loop immediately when switching screens.
-let controlTimer = null
-let controlGeneration = 0
-let latestControls = null
-function startControlSync() {
-  const generation = ++controlGeneration
-  const target = current
-  latestControls = null
-  async function tick() {
-    try {
-      const data = await fetchJson(`${target.serverUrl}/api/screens/${encodeURIComponent(target.screenId)}/controls`)
-      if (current !== target || generation !== controlGeneration) return
-      latestControls = data.assets
-      if (contentView && !contentView.webContents.isDestroyed()) contentView.webContents.send('controls:update', data.assets)
-    } catch (error) { console.warn('Controls temporarily unavailable:', error.message) }
-    finally { if (current === target && generation === controlGeneration) controlTimer = setTimeout(tick, 1000) }
-  }
-  tick()
-}
-
-// ── Realtime nudges (Centrifugo) ─────────────────────────────────────────────
-
-const realtimeCachePath = () => path.join(app.getPath('userData'), 'realtime.json')
-let realtimeClient = null
-let syncDebounce = null
-
-function scheduleLiveSync() {
-  clearTimeout(syncDebounce)
-  syncDebounce = setTimeout(() => {
-    if (current) loadScreen(true)
-  }, SYNC_DEBOUNCE_MS)
-}
-
 function stopRealtime() {
-  clearTimeout(controlTimer)
-  controlGeneration++
-  clearTimeout(syncDebounce)
-  if (realtimeClient) {
-    try { realtimeClient.close() } catch {}
-    realtimeClient = null
-  }
+  stopConnection?.(); stopConnection = null; latestSnapshot = null
 }
-
-// Ask the CMS once which channel/token to use (cached for offline launches), then subscribe.
-async function startRealtime() {
+function startRealtime() {
   stopRealtime()
-  startControlSync()
   const target = current
   if (!target) return
-
-  let info
-  try {
-    info = await fetchJson(`${target.serverUrl}/api/screens/${encodeURIComponent(target.screenId)}/realtime`)
-    if (info?.token) fs.writeFileSync(realtimeCachePath(), JSON.stringify({ ...info, serverUrl: target.serverUrl, screenId: target.screenId }))
-  } catch {
-    const cached = readJson(realtimeCachePath())
-    if (cached.serverUrl === target.serverUrl && cached.screenId === target.screenId) info = cached
-  }
-  if (current !== target || !info?.url || !info?.token || !info?.channel) return
-
-  try {
-    const client = new Centrifuge(info.url, { token: info.token })
-    realtimeClient = client
-    let connectedBefore = false
-    client.on('connected', () => {
-      // A (re)connection may follow missed messages, so sync once. The very first
-      // connection only needs one if the launch sync failed (e.g. started offline).
-      if (connectedBefore || !lastSyncOk) scheduleLiveSync()
-      connectedBefore = true
-    })
-    const subscription = client.newSubscription(info.channel)
-    subscription.on('publication', scheduleLiveSync)
-    subscription.on('error', (error) => console.error('Realtime subscribe failed', error))
-    subscription.subscribe()
-    client.connect()
-  } catch (error) {
-    console.error('Realtime unavailable', error)
-  }
+  show({ kind: 'layout', items: '[]' })
+  stopConnection = connectScreen({
+    ...target, fetchJson,
+    onSnapshot: snapshot => {
+      if (current !== target) return
+      latestSnapshot = snapshot
+      if (!contentView.webContents.isLoading()) contentView.webContents.send('screen:update', snapshot)
+    },
+    onDisconnected: reason => {
+      if (current !== target) return
+      latestSnapshot = null
+      show({ kind: 'message', text: reason })
+    },
+  })
 }
 
 async function openScreen({ serverUrl, screenId }) {
@@ -307,8 +117,7 @@ async function openScreen({ serverUrl, screenId }) {
   current = { serverUrl, screenId }
   saveConfig({ serverUrl, screenId })
   hideOverlay()
-  lastShownKey = null
-  loadScreen().then(startRealtime)
+  startRealtime()
   return { ok: true }
 }
 
@@ -321,10 +130,8 @@ function openSavedScreen() {
   if (!server || !id) return false
 
   current = { serverUrl: server, screenId: id }
-  const cachedAsset = readSavedContent(id)
-  if (cachedAsset !== undefined) showAsset(cachedAsset)
   hideOverlay()
-  loadScreen().then(startRealtime)
+  startRealtime()
   return true
 }
 
@@ -340,6 +147,13 @@ function showOverlay() {
 function hideOverlay() {
   overlayView.setVisible(false)
   contentView.webContents.focus()
+}
+
+function showPlayerActions() {
+  if (!overlayView || overlayView.getVisible()) return
+  overlayView.setVisible(true)
+  overlayView.webContents.send('player:actions')
+  overlayView.webContents.focus()
 }
 
 // Ctrl+R / Ctrl+Shift+R / F5 never reload: they bring back the Screen ID modal.
@@ -437,8 +251,13 @@ function createWindow() {
     },
   })
   contentView.setBackgroundColor('#000000')
+  // Also catches context menus originating inside embedded websites.
+  contentView.webContents.on('context-menu', (event) => {
+    event.preventDefault()
+    showPlayerActions()
+  })
   contentView.webContents.on('did-finish-load', () => {
-    if (latestControls) contentView.webContents.send('controls:update', latestControls)
+    if (latestSnapshot) contentView.webContents.send('screen:update', latestSnapshot)
   })
 
   overlayView = new WebContentsView({
@@ -470,6 +289,7 @@ function createWindow() {
   })
 
   win.on('closed', () => {
+    stopRealtime()
     win = contentView = overlayView = null
   })
 }
@@ -480,6 +300,14 @@ ipcMain.on('overlay:cancel', () => {
 })
 ipcMain.on('player:reset', () => showOverlay())
 ipcMain.on('player:quit', () => app.quit())
+ipcMain.on('player:actions', showPlayerActions)
+ipcMain.on('player:dismiss-actions', () => hideOverlay())
+ipcMain.on('player:fullscreen', () => {
+  if (!win) return
+  win.setFullScreen(true)
+  win.setKiosk(true)
+  hideOverlay()
+})
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
