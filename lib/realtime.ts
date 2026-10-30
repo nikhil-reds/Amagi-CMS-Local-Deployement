@@ -1,32 +1,26 @@
-// Pushes a "changed" nudge to the desktop players of one screen through Centrifugo.
-// The message carries no content: the player reacts by doing its normal one-time sync.
-// Publishing is best-effort — if Centrifugo is unconfigured or down, saving in the CMS still works
-// and the player simply picks the change up on its next launch.
-
-const PUBLISH_TIMEOUT_MS = 5000
+import { screenSnapshot } from '@/lib/screen-snapshot'
 
 export const screenChannel = (screenId: string) => `screen-${screenId}`
+export type Delivery = { delivered: boolean; error?: string }
+export function assertRealtimeConfig() {
+  if (!process.env.CENTRIFUGO_HTTP_URL || !process.env.CENTRIFUGO_API_KEY || !process.env.CENTRIFUGO_PUBLIC_URL || !process.env.CENTRIFUGO_TOKEN_SECRET) throw new Error('Centrifugo is not configured. Live delivery is unavailable.')
+}
 
-export async function publishScreenChanged(screenId: string) {
-  const url = process.env.CENTRIFUGO_HTTP_URL
-  const apiKey = process.env.CENTRIFUGO_API_KEY
-  if (!url || !apiKey) return
-
+export async function publishScreenChanged(screenId: string, type: 'media.updated' | 'controls.updated' | 'screen.deleted' = 'media.updated'): Promise<Delivery> {
   try {
-    const response = await fetch(
-      `${url.replace(/\/$/, '')}/api/publish`,
-      {
-        method: 'POST',
-        headers: {
-          'X-API-Key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ channel: screenChannel(screenId), data: { changed: true } }),
-        signal: AbortSignal.timeout(PUBLISH_TIMEOUT_MS),
-      }
-    )
-    if (!response.ok) console.error('[realtime publish]', response.status, await response.text())
+    assertRealtimeConfig()
+    const snapshot = type === 'screen.deleted' ? null : await screenSnapshot(screenId)
+    const response = await fetch(`${process.env.CENTRIFUGO_HTTP_URL!.replace(/\/$/, '')}/api/publish`, {
+      method: 'POST', headers: { 'X-API-Key': process.env.CENTRIFUGO_API_KEY!, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: screenChannel(screenId), data: { type: snapshot ? type : 'screen.deleted', snapshot } }),
+      signal: AbortSignal.timeout(5000),
+    })
+    const result = await response.json()
+    if (!response.ok || result.error) throw new Error('Centrifugo rejected the update')
+    return { delivered: true }
   } catch (error) {
     console.error('[realtime publish]', error)
+    // The database write has already committed. Never claim delivery, retry, queue or poll.
+    return { delivered: false, error: 'Saved, but live delivery failed. Reconnect the player to load the saved state.' }
   }
 }
