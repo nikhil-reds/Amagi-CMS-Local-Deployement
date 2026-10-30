@@ -4,24 +4,23 @@ import { useEffect, useState } from 'react'
 import { Maximize2, Monitor } from 'lucide-react'
 import CloseButton from '../../[docId]/CloseButton'
 import ControlledMedia, { type ControlledAsset } from '@/components/ControlledMedia'
+import { connectScreen } from '@/lib/screen-realtime'
 
-type ScreenPlayerProps = { screenId: string; screenName: string; assets: ControlledAsset[]; kiosk?: boolean }
+type ScreenPlayerProps = { screenId: string; screenName: string; kiosk?: boolean }
 
-export default function ScreenPlayer({ screenId, screenName, assets: initialAssets, kiosk = false }: ScreenPlayerProps) {
-  const [assets, setAssets] = useState(initialAssets)
+export default function ScreenPlayer({ screenId, screenName, kiosk = false }: ScreenPlayerProps) {
+  const [assets, setAssets] = useState<ControlledAsset[]>([])
+  const [connectionError, setConnectionError] = useState('')
+  const [connecting, setConnecting] = useState(true)
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
-    const controller = new AbortController()
-    let timer: ReturnType<typeof setTimeout>
-    async function sync() {
-      try {
-        const response = await fetch(`/api/screens/${screenId}/controls`, { cache: 'no-store', signal: controller.signal })
-        if (response.ok) { const data = await response.json(); if (!controller.signal.aborted) setAssets(data.assets) }
-      } catch { /* Keep playing during temporary connection failures. */ }
-      finally { if (!controller.signal.aborted) timer = setTimeout(sync, 1000) }
-    }
-    void sync()
-    return () => { controller.abort(); clearTimeout(timer) }
-  }, [screenId])
+    return connectScreen(screenId, {
+      onSnapshot: snapshot => setAssets(snapshot.assets),
+      onConnected: () => { setConnecting(false); setConnectionError('') },
+      onDisconnected: reason => { setConnecting(false); setConnectionError(reason); setAssets([]) },
+      onDeleted: () => setAssets([]),
+    })
+  }, [screenId, attempt])
   function enterFullscreen() {
     const target = document.documentElement
     if (!document.fullscreenElement) {
@@ -38,8 +37,9 @@ export default function ScreenPlayer({ screenId, screenName, assets: initialAsse
           </div>
           <h2 className="text-lg font-bold text-white/90">{screenName}</h2>
           <p className="text-sm text-zinc-500">
-            Drag an asset onto this screen from the main screen page to start playback.
+            {connecting ? 'Connecting to live screen updates…' : connectionError || 'Assign media from Main Screen to start playback.'}
           </p>
+          {connectionError && <button className="rounded-full bg-white px-5 py-2 text-sm text-black" onClick={() => { setConnecting(true); setConnectionError(''); setAttempt(value => value + 1) }}>Reconnect</button>}
           {!kiosk && <CloseButton />}
         </div>
       </div>
