@@ -94,7 +94,7 @@ export default function FilePanel() {
         {loading ? (
           <DocumentListSkeleton />
         ) : filteredDocuments.length === 0 ? (
-          <div className="flex min-h-80 flex-col items-center justify-center gap-3 px-6 text-center text-gray-400 dark:text-zinc-500">
+          <div className="main-screen-library-empty flex min-h-80 flex-col items-center justify-center gap-3 px-6 text-center text-gray-400 dark:text-zinc-500">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-zinc-800/50">
               <FileText className="h-6 w-6" />
             </div>
