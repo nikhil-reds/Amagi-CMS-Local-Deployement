@@ -415,7 +415,7 @@ export default function ScreenPanel() {
             <p className="text-xs">Add a screen to track display endpoints.</p>
           </div>
         ) : (
-          <div className="main-screen-grid flex gap-3 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-1 md:overflow-visible md:pb-0 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 md:gap-4 lg:gap-5" data-autoscroll>
+          <div className="main-screen-grid" data-autoscroll>
             {screens.map((screen) => {
               const assets = screen.assets || []
               const primaryAsset = assets[0]
