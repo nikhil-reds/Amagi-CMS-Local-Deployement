@@ -22,7 +22,7 @@ export default function MainScreenLoading() {
           </div>
           <Skeleton className="h-10 w-full rounded-lg" />
         </div>
-        <div className="flex-1 overflow-hidden p-4">
+        <div data-autoscroll className="flex-1 min-h-0 overflow-hidden">
           <DocumentListSkeleton />
         </div>
       </aside>
@@ -32,7 +32,7 @@ export default function MainScreenLoading() {
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-7 w-28 rounded-lg" />
         </div>
-        <div className="flex-1 overflow-hidden p-5">
+        <div data-autoscroll className="flex-1 min-h-0 overflow-hidden">
           <ScreenGridSkeleton />
         </div>
       </section>
