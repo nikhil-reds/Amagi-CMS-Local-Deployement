@@ -1,10 +1,17 @@
 /* Layout rules use the available workspace width, including the navigation rail. */
-.console-content { container-type: inline-size; background: #09090e; }
-.console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.main-screen-page,.control-page) {
+.console-content { container-type: inline-size; position: relative; isolation: isolate; background: #000; }
+/* Shared background extracted from the Users reference; no content layout changes. */
+.console-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.console-aurora { position: absolute; right: -10%; top: -10%; width: 70%; aspect-ratio: 1.6 / 1; opacity: .22; filter: blur(90px); }
+.console-aurora i { position: absolute; border-radius: 50%; mix-blend-mode: screen; }
+.console-aurora i:nth-child(1) { left: 6%; top: 20%; width: 44%; height: 70%; background: #3B5BFF; }
+.console-aurora i:nth-child(2) { left: 34%; top: 6%; width: 38%; height: 80%; background: #9B4DFF; }
+.console-aurora i:nth-child(3) { left: 58%; top: 24%; width: 36%; height: 64%; background: #FF4FAE; }
+.console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.control-page) {
   padding: 28px clamp(16px, 2.5vw, 40px) max(32px, env(safe-area-inset-bottom));
   min-width: 0;
 }
-:is(.dashboard-page,.documents-page,.screens-page,.users-page,.main-screen-page,.control-page) :is(section,article,header) { min-width: 0; }
+:is(.dashboard-page,.documents-page,.screens-page,.users-page,.control-page) :is(section,article,header) { min-width: 0; }
 :is(.documents-header,.screens-header,.users-header,.control-heading) > div:first-child { min-width: 0; }
 :is(.documents-header,.screens-header,.users-header,.control-heading) p { line-height: 1.6; overflow-wrap: anywhere; }
 .documents-header-actions { flex-wrap: wrap; }
@@ -17,9 +24,6 @@
 .control-target > div:last-child { min-width: 0; }
 .control-target label { min-width: 0; max-width: 100%; }
 .control-target select.control-field { min-width: 0; max-width: 100%; }
-.main-screen-page [data-screen-library] { min-width: 0; }
-.main-screen-page [data-screen-panel] > div:first-child { flex-wrap: wrap; gap: 12px; }
-.main-screen-page .main-screen-card-heading > div:last-child { flex-shrink: 0; }
 .dashboard-overview .grid > div { min-width: 0; }
 .dashboard-overview .grid p:last-child { overflow-wrap: anywhere; }
 .dashboard-activity [class*="divide-y"] > div > :last-child { flex-shrink: 0; }
@@ -34,8 +38,6 @@
 [data-main-screen-sheet] { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 
 @container (max-width: 1000px) {
-  .main-screen-workspace { grid-template-columns: 1fr; }
-  .main-screen-page [data-screen-library] { max-height: 340px; }
   .dashboard-screens > .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .documents-header { flex-wrap: wrap; }
   .documents-header-actions { width: 100%; justify-content: space-between; }
@@ -48,7 +50,7 @@
   .users-tools > label { width: 100%; }
 }
 @media (max-width: 640px) {
-  .console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.main-screen-page,.control-page) { padding-top: 22px; }
+  .console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.control-page) { padding-top: 22px; }
   .documents-header-actions { gap: 12px; }
   .documents-meter { flex-wrap: wrap; height: auto; min-height: 44px; padding-block: 10px; }
   .documents-page .documents-upload { height: 44px; font-size: 15px; gap: 12px; }
@@ -62,9 +64,6 @@
   .control-target > div:first-child > svg { flex-shrink: 0; }
   .control-target select.control-field { width: 100%; }
   .control-heading [role="status"] { max-width: 100%; overflow-wrap: anywhere; }
-  .main-screen-page .main-screen-card-heading { gap: 8px; flex-wrap: wrap; }
-  .main-screen-page .main-screen-card-heading > div:first-child { flex: 1; min-width: 80px; }
-  .main-screen-page .main-screen-heading { margin-bottom: 18px; }
   .dashboard-overview > div { padding: 14px; }
   .dashboard-overview .grid { gap: 6px; }
   .dashboard-overview .grid > div { padding: 12px 6px; }
@@ -74,10 +73,8 @@
   .console-navbar button { width: 44px; height: 44px; }
   .console-sidebar-link { min-height: 44px; }
   .console-sidebar-logout { width: 44px; height: 44px; }
-  .console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.main-screen-page,.control-page) :is(button,a:not(:has(img)),select,input:not([type="checkbox"]):not([type="range"])) { min-height: 44px; }
-  .console-content > :is(.documents-page,.screens-page,.users-page,.main-screen-page,.control-page) :is(input:not([type="checkbox"]):not([type="range"]),select,textarea),
+  .console-content > :is(.dashboard-page,.documents-page,.screens-page,.users-page,.control-page) :is(button,a:not(:has(img)),select,input:not([type="checkbox"]):not([type="range"])) { min-height: 44px; }
+  .console-content > :is(.documents-page,.screens-page,.users-page,.control-page) :is(input:not([type="checkbox"]):not([type="range"]),select,textarea),
   :is([data-documents-dialog],[data-users-dialog],[data-main-screen-sheet]) :is(input,select,textarea) { font-size: 16px; }
-  .main-screen-page .touch-draggable { padding-right: 48px; }
-  .main-screen-page .touch-draggable button { width: 40px; height: 44px; }
   .control-card button { min-width: 44px; }
 }
