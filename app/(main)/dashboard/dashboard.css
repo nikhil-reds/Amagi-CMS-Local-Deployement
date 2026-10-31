@@ -8,7 +8,7 @@
   gap: 18px;
   color: #fff;
   font-family: var(--font-abro-sans),system-ui,sans-serif;
-  background: radial-gradient(ellipse at 80% 0%, #30214e80, transparent 55%), radial-gradient(ellipse at 10% 85%, #18387550, transparent 55%), #09090e;
+  background: transparent;
 }
 .dashboard-heading { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
 .dashboard-heading h1 { color: #fff; font-size: 40px; font-weight: 100; letter-spacing: -.02em; line-height: 1.1; }
