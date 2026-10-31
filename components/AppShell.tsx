@@ -54,7 +54,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </SheetContent>
         </Sheet>
 
-        <main className="console-content min-w-0 flex-1">{children}</main>
+        <main className="console-content min-w-0 flex-1">
+          <div className="console-background" aria-hidden="true">
+            <div className="console-aurora"><i /><i /><i /></div>
+          </div>
+          {children}
+        </main>
       </div>
     </div>
   )
