@@ -103,7 +103,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
           className="console-sidebar-download"
         >
           <Download className="size-4" />
-          {!compact && <span><b>Download XOS</b><small>Player app for your<br />screens</small></span>}
+          {!compact && <span><b>Download XOS</b><small>Player app for your screens</small></span>}
         </a>
         <LogoutButton compact={compact} />
       </div>
