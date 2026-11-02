@@ -15,7 +15,13 @@ function connectScreen({ serverUrl, screenId, onSnapshot, onConnected, onDisconn
     const assets = snapshot.assets.map(asset => {
       const url = new URL(asset.document.s3Url, serverUrl)
       if (['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(url.hostname)) url.hostname = new URL(serverUrl).hostname
-      return { ...asset, document: { ...asset.document, s3Url: url.href } }
+      let websiteUrl = asset.document.websiteUrl
+      if (asset.id.startsWith('simulation-') && websiteUrl) {
+        const feedUrl = new URL(websiteUrl)
+        if (['localhost', '127.0.0.1'].includes(feedUrl.hostname)) feedUrl.hostname = new URL(serverUrl).hostname
+        websiteUrl = feedUrl.href
+      }
+      return { ...asset, document: { ...asset.document, s3Url: url.href, websiteUrl } }
     })
     onSnapshot({ ...snapshot, assets })
   }
