@@ -19,7 +19,10 @@
 .control-target > div:first-child > svg { width: 42px; height: 42px; padding: 10px; border: 1px solid #ffffff16; border-radius: 12px; background: #ffffff08; color: #ffffffb3; }
 .control-target h2 { color: #fff; font-size: 15px; font-weight: 400; }
 .control-target p { color: #c4c4d0; font-size: 12px; }
-.control-target > div:last-child { align-items: center; }
+.control-target-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.control-target-actions > :is(button, a) { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; height: 40px; white-space: nowrap; }
+.control-target-actions > a { padding-inline: 18px; }
+.control-target-actions > .control-countdown { display: inline-flex; align-items: center; height: 40px; }
 .control-page .control-field { height: 40px; border-radius: 12px; border: 1px solid #ffffff30; background: #ffffff0d; color: #fff; font-size: 13px; box-shadow: inset 0 1px 0 #ffffff08; transition: border-color .16s, background-color .16s; }
 .control-page select.control-field { cursor: pointer; padding-right: 26px; }
 .control-target select.control-field { border-radius: 999px; min-width: 200px; }
@@ -55,7 +58,7 @@
 @media (max-width: 640px) { .control-page { padding: 22px 14px 32px; } .control-heading { align-items: flex-start; flex-direction: column; gap: 14px; } .control-heading h1 { font-size: 34px; } .control-heading p { font-size: 13px; } .control-page .control-target { padding: 16px; } .control-target > div:last-child > label { width: 100%; } .control-target select.control-field { width: 100%; } .control-card > header, .control-card > div { padding: 16px; } }
 @media (prefers-reduced-motion: reduce) { .control-page * { animation: none !important; transition: none !important; } }
 
-.control-target .control-connect { align-self: flex-end; height: 40px; padding: 0 20px; border: 1px solid #fff; border-radius: 999px; background: #fff; color: #000; font-size: 13px; cursor: pointer; }
+.control-target .control-connect { height: 40px; padding: 0 20px; border: 1px solid #fff; border-radius: 999px; background: #fff; color: #000; font-size: 13px; cursor: pointer; }
 .control-target .control-connect:disabled { opacity: .45; cursor: default; }
 .control-countdown { font-variant-numeric: tabular-nums; font-size: 14px; color: #bca8ff; }
 
