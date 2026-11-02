@@ -11,6 +11,8 @@
     "predev": "node scripts/prepare-media.cjs",
     "prebuild": "node scripts/prepare-media.cjs",
     "test:realtime": "tsx --test scripts/realtime.test.ts",
+    "test:simulation": "tsx --test scripts/simulation.test.ts",
+    "test:simulation:integration": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/simulation-integration.ts",
     "test:realtime:integration": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/realtime-integration.ts",
     "test:realtime:browser": "node --env-file=.env node_modules/@playwright/test/cli.js test"
   },
