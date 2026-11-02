@@ -14,18 +14,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-dvh bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 md:flex">
+    // Console is always dark, so every page shares the reference black and aurora.
+    <div className="dark min-h-dvh bg-black text-white md:flex">
+      <div className="console-background" aria-hidden="true">
+        <div className="console-aurora"><i /><i /><i /></div>
+      </div>
+
       {/* Tablet rail */}
-      <div className="console-sidebar-rail hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:block md:w-[72px] md:border-r md:border-zinc-200 dark:md:border-zinc-800 lg:hidden">
+      <div className="console-sidebar-rail hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:block md:w-[72px] lg:hidden">
         <AppSidebar compact />
       </div>
 
       {/* Desktop sidebar */}
-      <div className="console-sidebar-desktop hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:w-64 lg:border-r lg:border-zinc-200 dark:lg:border-zinc-800">
+      <div className="console-sidebar-desktop hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:w-[232px]">
         <AppSidebar />
       </div>
 
-      <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:pl-[72px] lg:pl-64">
+      <div className="relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col md:pl-[72px] lg:pl-[232px]">
         <Navbar
           menuControl={
             <Button
@@ -46,7 +51,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SheetContent
             side="left"
             showCloseButton={false}
-            className="w-72 max-w-[85vw] gap-0 bg-white p-0 dark:bg-zinc-900 md:hidden"
+            className="w-72 max-w-[85vw] gap-0 bg-black p-0 md:hidden"
           >
             <SheetTitle className="sr-only">Main navigation</SheetTitle>
             <SheetDescription className="sr-only">Navigate between dashboard pages</SheetDescription>
@@ -55,9 +60,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Sheet>
 
         <main className="console-content min-w-0 flex-1">
-          <div className="console-background" aria-hidden="true">
-            <div className="console-aurora"><i /><i /><i /></div>
-          </div>
           {children}
         </main>
       </div>
