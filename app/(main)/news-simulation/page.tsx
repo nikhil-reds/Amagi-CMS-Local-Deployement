@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react"
 import "./news-simulation.css"
 
 type SimulationScreen = { screenNumber: number; name: string; port: number; url: string }
+type Destination = { id: string; code: string; name: string }
 const ports = Array.from({ length: 12 }, (_, index) => 3000 + index)
 
 export default function NewsSimulationPage() {
@@ -14,6 +15,10 @@ export default function NewsSimulationPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const [active, setActive] = useState(false)
+  const [changing, setChanging] = useState(false)
+  const [destinations, setDestinations] = useState<Destination[]>([])
+  const [targets, setTargets] = useState<string[]>(['', '', '', ''])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -24,6 +29,12 @@ export default function NewsSimulationPage() {
         if (!response.ok) throw new Error(data.error || 'Failed to load screens')
         setScreens(data)
         if (data.length) setPort(data[0].port)
+        const stateResponse = await fetch('/api/news-simulation/session', { signal: controller.signal, cache: 'no-store' })
+        const state = await stateResponse.json()
+        if (!stateResponse.ok) throw new Error(state.error || 'Failed to load simulation state')
+        setActive(state.active)
+        setDestinations(state.screens)
+        setTargets(state.targetScreenIds.length === 4 ? state.targetScreenIds : Array.from({ length: 4 }, (_, index) => state.screens.find((screen: Destination) => screen.name.toLowerCase() === `screen ${String(index + 1).padStart(2, '0')}`)?.id || ''))
       } catch (error) {
         if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Failed to load screens')
       } finally {
@@ -33,6 +44,28 @@ export default function NewsSimulationPage() {
     void load()
     return () => controller.abort()
   }, [])
+
+  async function changeSimulation(action: 'start' | 'end') {
+    setChanging(true)
+    setError('')
+    setMessage('')
+    try {
+      const response = await fetch('/api/news-simulation/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, targetScreenIds: targets }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Unable to change simulation')
+      setActive(data.active)
+      setTargets(data.targetScreenIds)
+      setMessage(data.active ? 'Simulation started on the four selected screens.' : 'Simulation ended. Original content restored.')
+      if (data.warning) setError(data.warning)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to change simulation')
+    } finally {
+      setChanging(false)
+    }
+  }
 
   async function savePort() {
     setSaving(true)
@@ -47,7 +80,7 @@ export default function NewsSimulationPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to save screens')
       setScreens(data)
-      setMessage('All 12 screens saved.')
+      setMessage(`All ${data.length} screens saved.`)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to save screens')
     } finally {
@@ -63,16 +96,34 @@ export default function NewsSimulationPage() {
           <label htmlFor="simulation-port">Universal localhost port</label>
           <div className="news-simulation-select">
             <span>localhost:</span>
-            <select id="simulation-port" value={port} disabled={loading || saving} onChange={(event) => { setPort(Number(event.target.value)); setMessage("") }} aria-label="Universal localhost port for all 12 screens">
+            <select id="simulation-port" value={port} disabled={loading || saving || changing || active} onChange={(event) => { setPort(Number(event.target.value)); setMessage("") }} aria-label="Universal localhost port for all screens">
               {ports.map((port) => <option key={port} value={port}>{port}</option>)}
             </select>
             <ChevronDown size={14} aria-hidden="true" />
           </div>
-          <button className="news-simulation-save" type="button" onClick={savePort} disabled={loading || saving}>{saving ? 'Saving…' : 'Save all screens'}</button>
+          <button className="news-simulation-save" type="button" onClick={savePort} disabled={loading || saving || changing || active}>{saving ? 'Saving…' : 'Save all screens'}</button>
         </div>
       </header>
       {error && <p className="news-simulation-error" role="alert">{error}</p>}
       {message && <p className="news-simulation-message" role="status">{message}</p>}
+
+      <section className="simulation-controls" aria-label="Simulation controls">
+        <div className="simulation-toolbar">
+          <span role="status">Simulation: {active ? 'Active' : 'Inactive'}</span>
+          <button type="button" onClick={() => changeSimulation('start')} disabled={loading || saving || changing || active || targets.some(id => !id) || new Set(targets).size !== 4}>Start New Simulation</button>
+          <button type="button" onClick={() => changeSimulation('end')} disabled={loading || saving || changing || !active}>End Simulation</button>
+        </div>
+        <p>Start opens the 12 saved simulation URLs on the four selected CMS screens, three URLs stacked vertically on each screen. End Simulation restores the original content.</p>
+        <div className="simulation-targets">
+          {[0, 1, 2, 3].map(index => <label key={index}>
+            Screen {String(index + 1).padStart(2, '0')} · feeds {index * 3 + 1}–{index * 3 + 3}
+            <select aria-label={`Destination for Screen ${String(index + 1).padStart(2, '0')}`} value={targets[index] || ''} disabled={loading || changing || active} onChange={event => setTargets(values => values.map((value, position) => position === index ? event.target.value : value))}>
+              <option value="">Choose screen</option>
+              {destinations.map(screen => <option key={screen.id} value={screen.id}>{screen.name} ({screen.code})</option>)}
+            </select>
+          </label>)}
+        </div>
+      </section>
 
       <div className="news-simulation-table-wrap">
         <table className="news-simulation-table" aria-label="News simulation screen ports">
