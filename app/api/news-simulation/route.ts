@@ -25,17 +25,23 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const screens = await prisma.$transaction(
-      Array.from({ length: 12 }, (_, index) => {
+    const screens = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "NewsSimulationState" WHERE "id" = 'global' FOR UPDATE`
+      const state = await tx.newsSimulationState.findUnique({ where: { id: 'global' } })
+      if (state?.active) return null
+      return Promise.all(Array.from({ length: 17 }, (_, index) => {
         const screenNumber = index + 1
-        const data = { name: `Screen ${screenNumber}`, port, url: `http://localhost:${port}/view/screen/${screenNumber}` }
-        return prisma.newsSimulationScreen.upsert({
+        const name = screenNumber <= 12 ? `Screen ${screenNumber}` : `broadcast${String(screenNumber - 12).padStart(2, '0')}`
+        const path = screenNumber <= 12 ? `screen${screenNumber}` : `broadcast${screenNumber - 12}`
+        const data = { name, port, url: `http://localhost:${port}/${path}` }
+        return tx.newsSimulationScreen.upsert({
           where: { screenNumber },
           create: { screenNumber, ...data },
           update: data,
         })
-      }),
-    )
+      }))
+    })
+    if (!screens) return NextResponse.json({ error: 'End the simulation before changing its port' }, { status: 409 })
     return NextResponse.json(screens)
   } catch (error) {
     console.error('[news-simulation PUT]', error)
