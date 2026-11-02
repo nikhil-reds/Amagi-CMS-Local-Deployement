@@ -10,8 +10,8 @@ export async function GET(
   if (denied) return denied
 
   const { screenNumber: value } = await params
-  if (!/^(?:[1-9]|1[0-2])$/.test(value)) {
-    return NextResponse.json({ error: 'Screen number must be between 1 and 12' }, { status: 400 })
+  if (!/^(?:[1-9]|1[0-7])$/.test(value)) {
+    return NextResponse.json({ error: 'Screen number must be between 1 and 17' }, { status: 400 })
   }
 
   try {
@@ -29,3 +29,4 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to load simulation screen' }, { status: 500 })
   }
 }
+     
