@@ -6,13 +6,15 @@ All endpoints require a signed-in session cookie. Responses are JSON.
 
 `GET /api/news-simulation`
 
-Returns the 12 saved screen records ordered by screen number.
+Returns the 17 saved screen records ordered by screen number. Screens 1–12 retain their existing names; screens 13–17 are named `broadcast01` through `broadcast05`.
+
+Screen URLs use `/screen1` through `/screen12`. Broadcast URLs use `/broadcast1` through `/broadcast5`, respectively.
 
 ## Read one screen
 
 `GET /api/news-simulation/{screenNumber}`
 
-Use screen numbers 1–12, for example `/api/news-simulation/1` or `/api/news-simulation/12`.
+Use screen numbers 1–17, for example `/api/news-simulation/1` or `/api/news-simulation/17`.
 
 Example response (timestamps omitted):
 
@@ -21,7 +23,7 @@ Example response (timestamps omitted):
   "screenNumber": 1,
   "name": "Screen 1",
   "port": 3000,
-  "url": "http://localhost:3000/view/screen/1"
+  "url": "http://localhost:3000/screen1"
 }
 ```
 
@@ -37,7 +39,7 @@ Requires ADMIN or EDITOR role and `Content-Type: application/json`.
 { "port": 3001 }
 ```
 
-Accepts integer ports 3000–3011. Saves all 12 screens and their generated URLs in one transaction and returns the saved records. Individual screen ports cannot be updated separately because the port is universal.
+Accepts integer ports 3000–3011. Saves all 17 screens and their generated URLs in one transaction and returns the saved records. Individual screen ports cannot be updated separately because the port is universal.
 
 ## Error responses
 
@@ -47,4 +49,18 @@ Accepts integer ports 3000–3011. Saves all 12 screens and their generated URLs
 - `404`: Screen record does not exist.
 - `500`: Database operation failed.
 
-The saved URLs describe the configured screen addresses. These APIs return configuration data; they do not start localhost servers or create viewer content.
+Simulation URLs point to the simulation service, for example `http://localhost:3000/screen1`. The CMS embeds these addresses directly; the service at the selected port supplies the pages and must allow embedding. No document selection is required. Broadcast addresses remain configuration records.
+
+## Simulation lifecycle
+
+`GET /api/news-simulation/session` returns the persisted active state, destination screen IDs, and available screens. Requires a signed-in session.
+
+`POST /api/news-simulation/session` requires ADMIN or EDITOR. To start:
+
+```json
+{ "action": "start", "targetScreenIds": ["screen-id-1", "screen-id-2", "screen-id-3", "screen-id-4"] }
+```
+
+Destinations receive saved URLs 1–3, 4–6, 7–9, and 10–12 in vertical rows. No CMS-generated document viewer is inserted. Screen assignments and controls are preserved; changes to original assignments during simulation appear when it ends.
+
+To end, send `{ "action": "end" }`. Repeated starts/ends are idempotent. Lifecycle changes serialize in the database, touch screen revisions and publish live snapshots. Players that reconnect load the persisted mode. A delivery failure returns a warning; reconnect affected players. Port changes return 409 while active.
