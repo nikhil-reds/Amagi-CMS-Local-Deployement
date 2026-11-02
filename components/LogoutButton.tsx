@@ -38,12 +38,12 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
     <div className="console-sidebar-account">
       {user && !compact ? (
         <div className="console-sidebar-profile">
-          <div className="console-sidebar-avatar">
+          <div className="console-sidebar-avatar" aria-hidden="true">
             {user.name.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.name}</p>
-            <p className="truncate text-xs text-zinc-500">{user.email}</p>
+          <div>
+            <p>{user.name}</p>
+            <p>{user.email}</p>
           </div>
         </div>
       ) : null}
@@ -56,7 +56,13 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
         aria-label="Log out"
         className="console-sidebar-logout"
       >
-        {signingOut ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
+        {signingOut ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M7 15H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 3h3M12 12.5 15.5 9 12 5.5M15.5 9H7" />
+          </svg>
+        )}
         <span className="sr-only">{signingOut ? "Logging out…" : "Log out"}</span>
       </button>
     </div>
