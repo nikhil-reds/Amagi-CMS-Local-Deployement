@@ -9,7 +9,7 @@
   padding-right: 30px;
   gap: 16px;
   border-bottom: 1px solid #ffffff0d;
-  background: #0d0d13eb;
+  background: rgba(0,0,0,.45);
   color: #fff;
   font-family: var(--font-abro-sans),system-ui,sans-serif;
   backdrop-filter: blur(24px) saturate(140%);
