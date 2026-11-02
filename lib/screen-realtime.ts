@@ -9,7 +9,13 @@ export function resolveSnapshot(snapshot: ScreenSnapshot, origin: string): Scree
   return { ...snapshot, assets: snapshot.assets.map(asset => {
     const url = new URL(asset.document.s3Url, origin)
     if (['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(url.hostname)) url.hostname = new URL(origin).hostname
-    return { ...asset, document: { ...asset.document, s3Url: url.href } }
+    let websiteUrl = asset.document.websiteUrl
+    if (asset.id.startsWith('simulation-') && websiteUrl) {
+      const feedUrl = new URL(websiteUrl)
+      if (['localhost', '127.0.0.1'].includes(feedUrl.hostname)) feedUrl.hostname = new URL(origin).hostname
+      websiteUrl = feedUrl.href
+    }
+    return { ...asset, document: { ...asset.document, s3Url: url.href, websiteUrl } }
   }) }
 }
 
