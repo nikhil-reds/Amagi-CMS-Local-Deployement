@@ -280,7 +280,7 @@ export default function ScreensDashboard() {
             ))}
           </div>
         ) : filteredScreens.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+          <div className="screens-empty flex-1 flex flex-col items-center justify-center p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center mb-4">
               <Monitor className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
             </div>
