@@ -1,7 +1,7 @@
 /* Layout rules use the available workspace width, including the navigation rail. */
-.console-content { container-type: inline-size; position: relative; isolation: isolate; background: #000; }
-/* Shared background extracted from the Users reference; no content layout changes. */
-.console-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.console-content { container-type: inline-size; position: relative; isolation: isolate; background: transparent; }
+/* Fixed backdrop shared by every console page and the sidebar (from the Multimedia Console reference). */
+.console-background { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #000; }
 .console-aurora { position: absolute; right: -10%; top: -10%; width: 70%; aspect-ratio: 1.6 / 1; opacity: .22; filter: blur(90px); }
 .console-aurora i { position: absolute; border-radius: 50%; mix-blend-mode: screen; }
 .console-aurora i:nth-child(1) { left: 6%; top: 20%; width: 44%; height: 70%; background: #3B5BFF; }
