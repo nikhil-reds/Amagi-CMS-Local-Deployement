@@ -21,7 +21,7 @@ export default function ScreensLoading() {
         <Skeleton className="h-28 rounded-2xl bg-white/50 backdrop-blur-md shadow-lg" />
       </section>
 
-      <section className="screens-list flex-1 bg-white/85 backdrop-blur-md border border-white/70 shadow-blue-950/10 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+      <section className="screens-list flex-1 overflow-hidden flex flex-col">
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-zinc-100">
              <Skeleton className="h-6 w-8 rounded-lg bg-zinc-200/50" />
