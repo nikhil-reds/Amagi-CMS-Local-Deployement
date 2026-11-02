@@ -3,6 +3,7 @@ import { screenIdentifierWhere } from '@/lib/screen-code'
 import { controlsWithDefaults, mediaKind } from '@/lib/media-controls'
 import { assetUrl } from '@/lib/asset-url'
 import type { Prisma } from '@/app/generated/prisma/client'
+import { simulationAssets } from './simulation'
 
 // A strictly increasing database timestamp supplies revisions without a schema migration.
 // Writers touch the screen inside the same transaction as the assignment/control change.
@@ -14,6 +15,12 @@ export async function screenSnapshot(identifier: string) {
   return prisma.$transaction(async tx => {
     const screen = await tx.screen.findUnique({ where: screenIdentifierWhere(identifier), include: { assets: { orderBy: { position: 'asc' }, include: { document: true } } } })
     if (!screen) return null
+    const simulation = await tx.newsSimulationState.findUnique({ where: { id: 'global' } })
+    const targetIndex = simulation?.active ? simulation.targetScreenIds.indexOf(screen.id) : -1
+    if (targetIndex !== undefined && targetIndex >= 0) {
+      const feeds = await tx.newsSimulationScreen.findMany({ where: { screenNumber: { lte: 12 } } })
+      return { id: screen.id, code: screen.code, name: screen.name, revision: screen.updatedAt.toISOString(), assets: simulationAssets(targetIndex, feeds) }
+    }
     const assets = await Promise.all(screen.assets.map(async asset => ({
       id: asset.id, kind: mediaKind(asset.document), controls: controlsWithDefaults(asset.controls),
       document: { id: asset.document.id, name: asset.document.name, mimeType: asset.document.mimeType, sourceType: asset.document.sourceType, websiteUrl: asset.document.websiteUrl,
