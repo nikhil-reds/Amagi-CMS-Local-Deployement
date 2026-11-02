@@ -7,6 +7,7 @@ import {
   Download,
   FileText,
   LayoutDashboard,
+  Newspaper,
   Grid2X2,
   SlidersHorizontal,
   Tv,
@@ -41,6 +42,12 @@ const navigationItems = [
     href: "/screens",
     icon: Grid2X2,
     matcher: (pathname: string) => pathname.startsWith("/screens"),
+  },
+  {
+    label: "News Simulation",
+    href: "/news-simulation",
+    icon: Newspaper,
+    matcher: (pathname: string) => pathname.startsWith("/news-simulation"),
   },
   {
     label: "Control",
