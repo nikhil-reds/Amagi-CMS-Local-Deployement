@@ -186,10 +186,10 @@ export default function UsersPage() {
       <div className="users-content">
         <section className="users-header">
           <div>
-            <h1 className="text-3xl font-semibold tracking-[-0.035em] text-zinc-900 dark:text-zinc-100">Users</h1>
-            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Manage your members and their workspace access.</p>
+            <h1 className="text-[40px] font-thin leading-none tracking-[-0.02em] text-white">Users</h1>
+            <p className="mt-2 text-sm text-white/50">Manage your members and their workspace access.</p>
           </div>
-          <Button onClick={() => setIsAddOpen(true)} className="users-add">
+          <Button onClick={() => setIsAddOpen(true)} className="users-add h-11 rounded-full bg-white px-4 text-black hover:bg-zinc-200">
             <Plus className="size-4" />
             Add user
           </Button>
@@ -201,21 +201,21 @@ export default function UsersPage() {
           <Metric icon={UserCheck} label="Editors" value={String(editors)} detail="Can manage media and screens" />
         </section>
 
-        <section aria-label="Workspace members" className="users-members overflow-visible rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-          <div className="users-tools flex flex-col gap-4 border-b border-zinc-200 dark:border-zinc-800 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <section aria-label="Workspace members" className="users-members overflow-visible rounded-[20px] border border-white/10 bg-white/[0.03] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+          <div className="users-tools flex flex-col gap-4 px-3 pb-4 pt-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Workspace members</h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Roles control access to workspace management features.</p>
+              <h2 className="text-[15px] font-normal text-white">Workspace members</h2>
+              <p className="mt-1 text-xs text-white/50">Roles control access to workspace management features.</p>
             </div>
-            <label className="flex h-10 w-full items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-3 text-zinc-500 dark:text-zinc-400 sm:w-[270px]">
+            <label className="flex h-[38px] w-full items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 text-white/55 focus-within:ring-1 focus-within:ring-white/70 sm:w-[270px]">
               <Search className="size-4" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email or role" aria-label="Search users" className="w-full bg-transparent text-sm text-zinc-700 dark:text-zinc-300 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email or role" aria-label="Search users" className="w-full bg-transparent text-[13.5px] text-white outline-none placeholder:text-white/40" />
             </label>
           </div>
 
           <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[800px] text-left">
-              <thead className="bg-zinc-50 dark:bg-zinc-900 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+              <thead className="text-xs font-normal text-white/45">
                 <tr>
                   <th className="px-5 py-4">User</th>
                   <th className="px-5 py-4">Role</th>
@@ -224,13 +224,13 @@ export default function UsersPage() {
                   <th className="w-16 px-5 py-4"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tbody className="divide-y divide-white/[0.06]">
                 {isLoading ? (
-                  <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading workspace members…</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-white/50">Loading workspace members…</td></tr>
                 ) : visibleUsers.length === 0 ? (
-                  <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">No users match your search.</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-white/50">No users match your search.</td></tr>
                 ) : visibleUsers.map((user) => (
-                  <tr key={user.id} className="group hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                  <tr key={user.id} className="group hover:bg-white/[0.04]">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="grid size-9 place-items-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300">{initials(user.name)}</div>
@@ -295,7 +295,7 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent data-users-dialog className="max-w-[520px] border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-0 text-zinc-900 dark:text-zinc-100">
+        <DialogContent data-users-dialog className="max-w-[520px] rounded-[22px] border-white/10 bg-[#15151d]/95 p-0 text-white backdrop-blur-xl">
           <form onSubmit={createUser}>
             <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 px-6 py-5">
               <DialogTitle className="text-xl">Add user</DialogTitle>
@@ -323,7 +323,7 @@ export default function UsersPage() {
 }
 
 function Metric({ icon: Icon, label, value, detail }: { icon: typeof Users; label: string; value: string; detail: string }) {
-  return <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md p-5 shadow-[0_6px_18px_rgba(15,23,42,0.025)]"><div className="mb-5 flex items-center justify-between"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">{label}</span><span className="grid size-8 place-items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"><Icon className="size-4" /></span></div><p className="text-3xl font-semibold tracking-[-0.03em] text-zinc-900 dark:text-zinc-100">{value}</p><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{detail}</p></article>
+  return <article className="rounded-[18px] border border-white/10 bg-white/[0.03] p-4 px-[18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"><div className="mb-3 flex items-center justify-between"><span className="text-sm text-white">{label}</span><span className="grid size-7 place-items-center rounded-full bg-white/[0.04] text-white/50"><Icon className="size-4" /></span></div><p className="text-[38px] font-thin leading-none text-white">{value}</p><p className="mt-2 text-xs leading-normal text-white/50">{detail}</p></article>
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
