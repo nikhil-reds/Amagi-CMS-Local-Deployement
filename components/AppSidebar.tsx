@@ -162,6 +162,13 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
           {!compact && <span><b>Download XOS</b><small>Player app for your screens</small></span>}
         </a>
         <LogoutButton compact={compact} />
+        {!compact && (
+          <div className="console-sidebar-footer">
+            <p className="console-sidebar-footer-brand">REDS <span>XOS</span></p>
+            <p className="console-sidebar-footer-description">REDS Experience Operating System</p>
+            <p className="console-sidebar-footer-copyright">© 2026 REDS XOS. All rights reserved.</p>
+          </div>
+        )}
       </div>
     </aside>
   )
