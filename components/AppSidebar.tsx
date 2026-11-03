@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { usePathname } from "next/navigation"
 
 import "./sidebar.css"
@@ -122,13 +121,10 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
   return (
     <aside className={cn("console-sidebar", compact && "console-sidebar-compact")}>
       <div className="console-sidebar-brand">
-        <div className="console-sidebar-logo"><Image src="/amagi-logo-white.svg" alt="Amagi" width={125} height={35} unoptimized /></div>
-        {!compact && (
-          <>
-            <p className="console-sidebar-title">Multimedia Console</p>
-            <p className="console-sidebar-description">Streaming media management</p>
-          </>
-        )}
+        <div className="console-sidebar-logo" style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+          <span style={{ fontSize: compact ? 10 : 11, fontWeight: 500, letterSpacing: "0.08em", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>mini</span>
+          <span style={{ fontSize: compact ? 18 : 22, fontWeight: 700, letterSpacing: "0.04em", color: "#fff" }}>XOS</span>
+        </div>
       </div>
 
       <nav className="console-sidebar-nav" aria-label="Main navigation">
