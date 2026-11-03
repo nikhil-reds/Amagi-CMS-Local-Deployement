@@ -14,6 +14,7 @@ import {
   Info,
   ArrowUpDown,
   Upload,
+  ArrowRight,
   Loader2,
   HardDrive,
   Clock,
@@ -438,136 +439,41 @@ export default function DocumentsDashboard() {
                 Upload files <span className="documents-upload-dot"><Upload className="w-5 h-5" /></span>
               </Button>
             </DialogTrigger>
-            <DialogContent data-documents-dialog className="max-w-[calc(100%-1rem)] sm:max-w-4xl rounded-2xl bg-white p-0 overflow-y-auto shadow-2xl">
-              <div className="grid grid-cols-1 md:grid-cols-12">
-                {/* Left panel: Specifications and Instructions (Col Span 5) */}
-                <div className="md:col-span-5 bg-zinc-50 p-4 sm:p-6 border-r border-zinc-100 flex flex-col justify-between">
-                  <div className="space-y-5">
-                    <div>
-                      <DialogTitle className="text-lg font-bold text-zinc-900">Storage</DialogTitle>
-                      <DialogDescription className="text-xs text-zinc-500 mt-1">
-                        Select files or save a website link into your workspace catalog.
-                      </DialogDescription>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="p-3 bg-white rounded-xl border border-zinc-150 shadow-sm space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
-                          Feature Highlight
-                        </span>
-                        <p className="text-[11px] font-medium text-zinc-700 leading-normal">
-                          You can drag &amp; drop files or save a website link as a storage asset.
-                        </p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-                          Supported Formats
-                        </span>
-
-                        <div className="space-y-2 text-[11px]">
-                          <div className="flex items-start gap-2">
-                            <span className="text-blue-500 font-bold shrink-0">•</span>
-                            <p className="text-zinc-650 leading-relaxed">
-                              <strong className="text-zinc-900">Images:</strong> PNG, JPG, JPEG, SVG, WebP, GIF, HEIC
-                            </p>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-purple-500 font-bold shrink-0">•</span>
-                            <p className="text-zinc-650 leading-relaxed">
-                              <strong className="text-zinc-900">Videos:</strong> MP4, MOV, AVI, MKV, WebM
-                            </p>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-red-500 font-bold shrink-0">•</span>
-                            <p className="text-zinc-650 leading-relaxed">
-                              <strong className="text-zinc-900">Documents:</strong> PDF, DOCX, PPTX, XLSX, TXT, CSV
-                            </p>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-emerald-500 font-bold shrink-0">•</span>
-                            <p className="text-zinc-650 leading-relaxed">
-                              <strong className="text-zinc-900">Audio:</strong> MP3, WAV, AAC, M4A, OGG
-                            </p>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-zinc-500 font-bold shrink-0">•</span>
-                            <p className="text-zinc-650 leading-relaxed">
-                              <strong className="text-zinc-900">Websites:</strong> HTTP and HTTPS links
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            <DialogContent data-documents-dialog className="storage-dialog">
+              <DialogTitle className="storage-title">Add to storage</DialogTitle>
+              <DialogDescription className="sr-only">Upload files or add a website link to your storage.</DialogDescription>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragOver(true)
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setDragOver(false)
+                  handleAddFiles(e.dataTransfer.files)
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`storage-dropzone ${dragOver ? 'is-dragging' : ''}`}
+              >
+                <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => handleAddFiles(e.target.files)} />
+                <div className="storage-upload-icon"><Upload className="h-5 w-5" /></div>
+                <p>Drop files here or <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}>browse</button></p>
+                <span>Up to 100 MB each</span>
+              </div>
+              <div className="storage-formats" aria-label="Supported file formats">
+                {[
+                  ['Images', ['PNG', 'JPG', 'JPEG', 'SVG', 'WebP', 'GIF', 'HEIC']],
+                  ['Video', ['MP4', 'MOV', 'AVI', 'MKV', 'WebM']],
+                  ['Documents', ['PDF', 'DOCX', 'PPTX', 'XLSX', 'TXT', 'CSV']],
+                  ['Audio', ['MP3', 'WAV', 'AAC', 'M4A', 'OGG']],
+                ].map(([label, formats]) => (
+                  <div className="storage-format-row" key={label as string}>
+                    <span>{label}</span>
+                    <div>{(formats as string[]).map((format) => <span key={format}>{format}</span>)}</div>
                   </div>
-
-                  <div className="text-[10px] text-zinc-400 border-t border-zinc-200/60 pt-4 mt-6">
-                    Stored files and website links will be cataloged instantly.
-                  </div>
-                </div>
-
-                {/* Right panel: Storage workspace (Col Span 7) */}
-                <div className="md:col-span-7 p-4 sm:p-6 flex flex-col justify-between gap-6 md:min-h-[400px]">
-                  <div className="space-y-4">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
-                      Dropzone Workspace
-                    </span>
-
-                    <div className="space-y-2 rounded-xl border border-zinc-150 bg-zinc-50/50 p-3">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                        Website URL
-                      </label>
-                      <input
-                        value={websiteUrl}
-                        onChange={(e) => setWebsiteUrl(e.target.value)}
-                        placeholder="https://example.com"
-                        className="h-11 sm:h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-base sm:text-xs text-zinc-800 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-black"
-                      />
-                      <input
-                        value={websiteName}
-                        onChange={(e) => setWebsiteName(e.target.value)}
-                        placeholder="Optional display name"
-                        className="h-11 sm:h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-base sm:text-xs text-zinc-800 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-black"
-                      />
-                    </div>
-
-                    {/* Storage Drop Zone */}
-                    <div
-                      onDragOver={(e) => {
-                        e.preventDefault()
-                        setDragOver(true)
-                      }}
-                      onDragLeave={() => setDragOver(false)}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        setDragOver(false)
-                        handleAddFiles(e.dataTransfer.files)
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-xl py-8 sm:py-12 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-200 ${
-                        dragOver
-                          ? 'border-black bg-zinc-50/50 scale-[0.99] shadow-inner'
-                          : 'border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/20'
-                      }`}
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleAddFiles(e.target.files)}
-                      />
-                      <div className="w-10 h-10 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center shadow-sm">
-                        <Upload className="w-5 h-5 text-zinc-500" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs font-semibold text-zinc-700">
-                          Drag &amp; drop files or <span className="underline text-black">browse</span>
-                        </p>
-                        <p className="text-[10px] text-zinc-400 mt-1">Multi-selection is fully active</p>
-                      </div>
-                    </div>
-
+                ))}
+              </div>
                     {/* File List */}
                     {uploadFiles.length > 0 && (
                       <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
@@ -613,32 +519,30 @@ export default function DocumentsDashboard() {
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  <DialogFooter className="mt-6 border-t border-zinc-100 pt-4 flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsUploadOpen(false)
-                        setUploadFiles([])
-                        setWebsiteUrl('')
-                        setWebsiteName('')
-                      }}
-                      className="cursor-pointer text-xs"
-                      disabled={isUploading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleUploadSubmit}
-                      className="bg-black hover:bg-zinc-900 text-white font-semibold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-40"
-                      disabled={(uploadFiles.length === 0 && websiteUrl.trim().length === 0) || isUploading}
-                    >
-                      {isUploading ? 'Processing...' : `Save ${uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}`}
-                    </Button>
-                  </DialogFooter>
-                </div>
+              <div className="storage-link-divider">or add a website link (http or https)</div>
+              <div className="storage-link-row">
+                <input aria-label="Website URL" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://" />
+                <Button className="storage-link-button" onClick={handleUploadSubmit} disabled={!websiteUrl.trim() || isUploading}>Add link</Button>
               </div>
+              {websiteUrl && (
+                <details className="storage-link-name">
+                  <summary>Optional display name</summary>
+                  <input aria-label="Optional display name" value={websiteName} onChange={(e) => setWebsiteName(e.target.value)} placeholder="Optional display name" />
+                </details>
+              )}
+              <DialogFooter className="storage-footer">
+                <Button variant="outline" onClick={() => {
+                  setIsUploadOpen(false)
+                  setUploadFiles([])
+                  setWebsiteUrl('')
+                  setWebsiteName('')
+                }} className="storage-cancel" disabled={isUploading}>Cancel</Button>
+                <Button onClick={handleUploadSubmit} className="storage-add" disabled={(uploadFiles.length === 0 && websiteUrl.trim().length === 0) || isUploading}>
+                  {isUploading ? 'Processing...' : `Add${uploadFiles.length > 0 ? ` (${uploadFiles.length})` : ''}`}
+                  <span><ArrowRight className="h-4 w-4" /></span>
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
