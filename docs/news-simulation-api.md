@@ -6,15 +6,15 @@ All endpoints require a signed-in session cookie. Responses are JSON.
 
 `GET /api/news-simulation`
 
-Returns the 17 saved screen records ordered by screen number. Screens 1–12 retain their existing names; screens 13–17 are named `broadcast01` through `broadcast05`.
+Returns the 18 saved screen records ordered by screen number. Screens 1–12 retain their existing names; screens 13–18 are named `broadcast01` through `broadcast06`.
 
-Screen URLs use `/screen1` through `/screen12`. Broadcast URLs use `/broadcast1` through `/broadcast5`, respectively.
+Screen URLs use `/screen1` through `/screen12`. Broadcast URLs use `/broadcast1` through `/broadcast6`, respectively.
 
 ## Read one screen
 
 `GET /api/news-simulation/{screenNumber}`
 
-Use screen numbers 1–17, for example `/api/news-simulation/1` or `/api/news-simulation/17`.
+Use screen numbers 1–18, for example `/api/news-simulation/1` or `/api/news-simulation/18`.
 
 Example response (timestamps omitted):
 
@@ -39,7 +39,7 @@ Requires ADMIN or EDITOR role and `Content-Type: application/json`.
 { "port": 3001 }
 ```
 
-Accepts integer ports 3000–3011. Saves all 17 screens and their generated URLs in one transaction and returns the saved records. Individual screen ports cannot be updated separately because the port is universal.
+Accepts integer ports 3000–3011. Saves all 18 screens and their generated URLs in one transaction and returns the saved records. Individual screen ports cannot be updated separately because the port is universal.
 
 ## Error responses
 
