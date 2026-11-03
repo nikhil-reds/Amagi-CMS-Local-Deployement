@@ -44,6 +44,12 @@
 .console-sidebar-logout:hover { background: rgba(255,255,255,.08); color: #fff; }
 .console-sidebar-logout:disabled { cursor: wait; opacity: .6; }
 .console-sidebar-logout > svg { width: 17px; height: 17px; stroke-width: 1.5; }
+.console-sidebar-footer { margin: 16px 8px 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); }
+.console-sidebar-footer p { margin: 0; }
+.console-sidebar-footer-brand { color: #eee; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.console-sidebar-footer-brand span { font-weight: 400; background: linear-gradient(90deg, #8094ef, #a34cbb); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.console-sidebar-footer .console-sidebar-footer-description { margin-top: 3px; max-width: 180px; color: rgba(255,255,255,.5); font-size: 11px; line-height: 1.6; }
+.console-sidebar-footer .console-sidebar-footer-copyright { margin-top: 3px; color: rgba(255,255,255,.3); font-size: 10px; line-height: 1.5; }
 .console-sidebar :is(a,button):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* Tablet icon rail */
