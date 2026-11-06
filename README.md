@@ -269,7 +269,7 @@ The audit creates disposable test screens/accounts and removes them on success. 
 
 An Electron kiosk app that plays a screen's assigned content full-screen on a Windows PC, with live sync via Centrifugo.
 
-**Flow:** open `XOS.exe` → full screen → enter Server URL + Screen ID → content plays
+**Flow:** install XOS once → open the XOS shortcut → full screen → enter Server URL + Screen ID → content plays
 
 | Key | Action |
 |---|---|
@@ -287,10 +287,12 @@ An Electron kiosk app that plays a screen's assigned content full-screen on a Wi
 cd desktop
 npm install
 npm start          # run locally
-npm run dist       # builds desktop/dist/AmagiScreenPlayer-1.0.0.exe
+npm run dist       # builds the fast installed desktop/dist/AmagiScreenPlayer-Setup-1.0.1.exe
+npm run dist:portable # optional self-extracting build; slower to open
 ```
 
-Copy the built `.exe` to `public/XOS.exe` for the sidebar download link.
+Copy the setup `.exe` to `public/XOS.exe` for the sidebar download link. The installer
+creates the XOS Desktop and Start menu shortcuts and avoids extracting Chromium on every launch.
 
 > Rebuild XOS after any renderer or PDF.js changes, then copy the new `.exe` to `public/XOS.exe`.
 

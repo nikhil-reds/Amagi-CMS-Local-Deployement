@@ -79,6 +79,7 @@
   <div class="backdrop">
     <section class="modal" id="playerActions" role="dialog" aria-modal="true" aria-labelledby="actionsTitle" hidden>
       <h1 id="actionsTitle">Player controls</h1>
+      <button type="button" class="close-button" id="actionReset"><span class="action-icon" aria-hidden="true">↻</span>Reset screen</button>
       <button type="button" class="close-button" id="actionClose"><span class="action-icon" aria-hidden="true">✕</span>Close player</button>
       <button type="button" class="close-button" id="actionFullscreen"><span class="action-icon" aria-hidden="true">⛶</span>Full screen</button>
     </section>
@@ -123,8 +124,9 @@
     window.player.onActions(() => {
       form.hidden = true
       actions.hidden = false
-      document.getElementById('actionClose').focus()
+      document.getElementById('actionReset').focus()
     })
+    document.getElementById('actionReset').addEventListener('click', () => window.player.reset())
     document.getElementById('actionClose').addEventListener('click', () => window.player.quit())
     document.getElementById('actionFullscreen').addEventListener('click', () => window.player.fullscreen())
     document.querySelector('.backdrop').addEventListener('click', (event) => {
@@ -184,7 +186,10 @@
       if (!actions.hidden && event.key === 'Escape') { window.player.dismissActions(); return }
       if (!actions.hidden && event.key === 'Tab') {
         event.preventDefault()
-        document.getElementById(document.activeElement.id === 'actionClose' ? 'actionFullscreen' : 'actionClose').focus()
+        const buttons = [...actions.querySelectorAll('button')]
+        const direction = event.shiftKey ? -1 : 1
+        const currentIndex = buttons.indexOf(document.activeElement)
+        buttons[(currentIndex + direction + buttons.length) % buttons.length].focus()
       }
       if (event.key === 'Escape' && canCancel) window.player.cancel()
     })

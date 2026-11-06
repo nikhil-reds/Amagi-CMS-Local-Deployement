@@ -1,4 +1,4 @@
-const { app, BaseWindow, WebContentsView, Menu, ipcMain, net, shell } = require('electron')
+const { app, BaseWindow, WebContentsView, Menu, ipcMain, net } = require('electron')
 const fs = require('fs')
 const path = require('path')
 const { connectScreen } = require('./screen-connection.cjs')
@@ -10,6 +10,15 @@ let win = null
 let contentView = null
 let overlayView = null
 let current = null // { serverUrl, screenId }
+let overlayReady = false
+let pendingOverlayMessage = null
+const startupStartedAt = performance.now()
+
+function markStartup(label) {
+  if (process.env.PLAYER_STARTUP_PROFILE === '1') {
+    console.log(`[startup +${Math.round(performance.now() - startupStartedAt)}ms] ${label}`)
+  }
+}
 
 // ── Config ────────────────────────────────────────────────────────────────────
 // build-config.json is written by CI (CMS_URL repo variable) and gives the default
@@ -85,6 +94,7 @@ function startRealtime() {
     ...target, fetchJson,
     onSnapshot: snapshot => {
       if (current !== target) return
+      if (!latestSnapshot) markStartup('first screen snapshot received')
       latestSnapshot = snapshot
       if (!contentView.webContents.isLoading()) contentView.webContents.send('screen:update', snapshot)
     },
@@ -132,6 +142,7 @@ function openSavedScreen() {
   current = { serverUrl: server, screenId: id }
   hideOverlay()
   startRealtime()
+  markStartup('saved screen started')
   return true
 }
 
@@ -139,9 +150,11 @@ function openSavedScreen() {
 
 function showOverlay() {
   if (!overlayView) return
+  const state = { ...loadConfig(), canCancel: Boolean(current) }
   overlayView.setVisible(true)
   overlayView.webContents.focus()
-  overlayView.webContents.send('overlay:show', { ...loadConfig(), canCancel: Boolean(current) })
+  if (overlayReady) overlayView.webContents.send('overlay:show', state)
+  else pendingOverlayMessage = ['overlay:show', state]
 }
 
 function hideOverlay() {
@@ -152,7 +165,8 @@ function hideOverlay() {
 function showPlayerActions() {
   if (!overlayView || overlayView.getVisible()) return
   overlayView.setVisible(true)
-  overlayView.webContents.send('player:actions')
+  if (overlayReady) overlayView.webContents.send('player:actions')
+  else pendingOverlayMessage = ['player:actions']
   overlayView.webContents.focus()
 }
 
@@ -172,54 +186,6 @@ function attachShortcuts(webContents) {
       showOverlay()
     }
   })
-}
-
-// ── Install location + shortcuts ──────────────────────────────────────────────
-// A portable exe runs from a temporary folder that is deleted on exit, so anything pinned
-// to the taskbar while it is running would break. On launch the exe therefore keeps a
-// permanent copy of itself in %LOCALAPPDATA%\XOS and points the Desktop and Start menu
-// shortcuts at that copy. Pin the Desktop/Start menu "XOS" shortcut to the taskbar (or
-// pin the running app: Windows resolves it to the shortcut/permanent copy).
-
-function ensureInstalled() {
-  if (process.platform !== 'win32' || !app.isPackaged) return
-  try {
-    const source = process.env.PORTABLE_EXECUTABLE_FILE
-    if (!source || !fs.existsSync(source)) return
-
-    const installDir = path.join(process.env.LOCALAPPDATA || app.getPath('appData'), 'XOS')
-    const target = path.join(installDir, 'XOS.exe')
-    const sourceStat = fs.statSync(source)
-    const targetStat = fs.existsSync(target) ? fs.statSync(target) : null
-    if (path.resolve(source).toLowerCase() !== path.resolve(target).toLowerCase() &&
-        (!targetStat || targetStat.size !== sourceStat.size || targetStat.mtimeMs < sourceStat.mtimeMs)) {
-      fs.mkdirSync(installDir, { recursive: true })
-      fs.copyFileSync(source, `${target}.tmp`)
-      fs.renameSync(`${target}.tmp`, target)
-    }
-
-    const options = { target, cwd: installDir, icon: target, iconIndex: 0, description: 'Amagi Screen Player', appUserModelId: 'com.amagi.screenplayer' }
-    const links = [
-      path.join(app.getPath('desktop'), 'XOS.lnk'),
-      path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'XOS.lnk'),
-    ]
-    const marker = path.join(app.getPath('userData'), 'shortcuts-created')
-    const firstRun = !fs.existsSync(marker)
-    for (const link of links) {
-      if (fs.existsSync(link)) {
-        // Repoint existing shortcuts (e.g. ones made by an older build).
-        if (shell.readShortcutLink(link).target !== target) shell.writeShortcutLink(link, 'update', options)
-      } else if (firstRun) {
-        shell.writeShortcutLink(link, 'create', options)
-      }
-    }
-    if (firstRun) {
-      fs.mkdirSync(path.dirname(marker), { recursive: true })
-      fs.writeFileSync(marker, '1')
-    }
-  } catch (error) {
-    console.error('Failed to install shortcuts', error)
-  }
 }
 
 // ── Window ────────────────────────────────────────────────────────────────────
@@ -257,6 +223,7 @@ function createWindow() {
     showPlayerActions()
   })
   contentView.webContents.on('did-finish-load', () => {
+    markStartup('player renderer loaded')
     if (latestSnapshot) contentView.webContents.send('screen:update', latestSnapshot)
   })
 
@@ -285,11 +252,23 @@ function createWindow() {
   overlayView.webContents.loadFile(path.join(__dirname, 'overlay.html'))
   overlayView.setVisible(false)
   overlayView.webContents.once('did-finish-load', () => {
-    if (!openSavedScreen()) showOverlay()
+    overlayReady = true
+    markStartup('overlay renderer loaded')
+    if (pendingOverlayMessage) {
+      overlayView.webContents.send(...pendingOverlayMessage)
+      pendingOverlayMessage = null
+    }
   })
+
+  // Saved playback starts immediately. The controls overlay loads concurrently and is
+  // only on the critical path for a first launch with no saved screen assignment.
+  if (!openSavedScreen()) showOverlay()
+  markStartup('window created')
 
   win.on('closed', () => {
     stopRealtime()
+    overlayReady = false
+    pendingOverlayMessage = null
     win = contentView = overlayView = null
   })
 }
@@ -320,13 +299,12 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
+    markStartup('Electron ready')
     // No application menu, so its default Reload (Ctrl+R) accelerator does not exist.
     // Same id as the shortcuts, so a pinned shortcut and the running window share one taskbar icon.
     app.setAppUserModelId('com.amagi.screenplayer')
     Menu.setApplicationMenu(null)
     createWindow()
-    // Keep first paint responsive; shortcut maintenance can happen after the player opens.
-    setImmediate(ensureInstalled)
   })
 
   app.on('before-quit', stopRealtime)

@@ -53,6 +53,7 @@ next-env.d.ts
 # Generated media renderer dependencies
 /public/pdfjs
 /desktop/pdfjs
+/desktop/centrifuge-client.cjs
 
 # Font assets (binary, served via CDN or package manager)
 /public/AbroSans

@@ -8,9 +8,11 @@
   "author": "Amagi",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win portable --x64 --publish never",
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "dist:portable": "electron-builder --win portable --x64 --publish never",
     "prestart": "node prepare-assets.cjs",
-    "predist": "node prepare-assets.cjs"
+    "predist": "node prepare-assets.cjs",
+    "predist:portable": "node prepare-assets.cjs"
   },
   "devDependencies": {
     "electron": "^44.5.1",
@@ -19,6 +21,10 @@
   "build": {
     "appId": "com.amagi.screenplayer",
     "productName": "Amagi Screen Player",
+    "compression": "maximum",
+    "electronLanguages": [
+      "en-US"
+    ],
     "directories": {
       "output": "dist"
     },
@@ -32,12 +38,25 @@
       "package.json",
       "media-runtime.js",
       "pdfjs/**/*",
-      "screen-connection.cjs"
+      "screen-connection.cjs",
+      "centrifuge-client.cjs",
+      "!node_modules/**/*"
     ],
     "win": {
       "icon": "icon.ico",
-      "target": "portable",
-      "artifactName": "AmagiScreenPlayer-${version}.exe"
+      "target": "nsis",
+      "artifactName": "AmagiScreenPlayer-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "XOS",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "AmagiScreenPlayer-Portable-${version}.${ext}"
     }
   },
   "dependencies": {

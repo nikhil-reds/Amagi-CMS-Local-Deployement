@@ -1,5 +1,13 @@
 // WebSocket-only screen subscription. No retries, polling, disk cache or transport fallback.
-const { Centrifuge } = require('centrifuge')
+let Centrifuge
+try {
+  ;({ Centrifuge } = require('./centrifuge-client.cjs'))
+} catch (error) {
+  if (error.code !== 'MODULE_NOT_FOUND' || !error.message.includes('centrifuge-client.cjs')) throw error
+  // Source checkouts use the installed dependency until prepare-assets creates the
+  // production-only client file.
+  ;({ Centrifuge } = require('centrifuge'))
+}
 function connectScreen({ serverUrl, screenId, onSnapshot, onConnected, onDisconnected, fetchJson, Client = Centrifuge }) {
   const abort = new AbortController()
   let disposed = false, client, revision = '', initial = true, deleted = false
