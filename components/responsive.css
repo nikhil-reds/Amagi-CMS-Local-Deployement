@@ -1,5 +1,7 @@
 /* Layout rules use the available workspace width, including the navigation rail. */
 .console-content { container-type: inline-size; position: relative; isolation: isolate; background: transparent; }
+[data-slot="sheet-content"][data-side="left"] > [data-slot="sheet-close"] { z-index: 2; color: #fff; background: rgba(255,255,255,.08); }
+[data-slot="sheet-content"][data-side="left"] > [data-slot="sheet-close"]:hover { background: rgba(255,255,255,.14); }
 /* Fixed backdrop shared by every console page and the sidebar (from the Multimedia Console reference). */
 .console-background { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #000; }
 .console-aurora { position: absolute; right: -10%; top: -10%; width: 70%; aspect-ratio: 1.6 / 1; opacity: .22; filter: blur(90px); }
@@ -38,14 +40,12 @@
 [data-main-screen-sheet] { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 
 @container (max-width: 1000px) {
-  .dashboard-screens > .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .documents-header { flex-wrap: wrap; }
   .documents-header-actions { width: 100%; justify-content: space-between; }
 }
 @container (max-width: 600px) {
   .dashboard-overview, .dashboard-activity { grid-template-columns: minmax(0,1fr); }
   .dashboard-overview > div:last-child { grid-column: auto; }
-  .dashboard-screens > .grid { grid-template-columns: minmax(0,1fr); }
   .users-tools { flex-direction: column; align-items: stretch; }
   .users-tools > label { width: 100%; }
 }

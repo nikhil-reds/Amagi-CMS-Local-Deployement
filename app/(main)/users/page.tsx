@@ -295,25 +295,25 @@ export default function UsersPage() {
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent data-users-dialog className="max-w-[520px] rounded-[22px] border-white/10 bg-[#15151d]/95 p-0 text-white backdrop-blur-xl">
-          <form onSubmit={createUser}>
+        <DialogContent data-users-dialog className="max-w-[520px] gap-0 overflow-hidden rounded-[22px] border-white/10 bg-[#15151d]/95 p-0 text-white backdrop-blur-xl">
+          <form onSubmit={createUser} className="users-dialog-form">
             <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 px-6 py-5">
               <DialogTitle className="text-xl">Add user</DialogTitle>
               <DialogDescription className="text-zinc-500 dark:text-zinc-400">Create a workspace account and choose its access level.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 px-6 py-5">
-              <Field label="Full name"><input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Priya Sharma" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /></Field>
-              <Field label="Email address"><input required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.com" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /></Field>
-              <Field label="Temporary password"><input required type="password" minLength={6} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} placeholder="At least 6 characters" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /></Field>
+            <div className="users-dialog-body grid gap-4 px-6 py-5">
+              <Field label="Full name"><input required autoComplete="name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Priya Sharma" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /></Field>
+              <Field label="Email address"><input required type="email" autoComplete="email" inputMode="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.com" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /></Field>
+              <Field label="Temporary password"><input required type="password" autoComplete="new-password" minLength={6} aria-describedby="add-user-password-hint" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} placeholder="At least 6 characters" className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400" /><span id="add-user-password-hint" className="users-field-hint">Use at least 6 characters. The user can change it later.</span></Field>
               <Field label="Role">
-                <select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as Role }))} className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400">
+                <select aria-label="Workspace role" value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as Role }))} className="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm outline-none focus:border-zinc-500 dark:focus:border-zinc-400">
                   {roles.map((role) => <option key={role.value} value={role.value}>{role.label} — {role.description}</option>)}
                 </select>
               </Field>
             </div>
-            <DialogFooter className="border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 sm:justify-between">
+            <DialogFooter className="users-dialog-footer mx-0 mb-0 rounded-none border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 sm:justify-between">
               <p className="hidden text-xs text-zinc-500 dark:text-zinc-400 sm:block">Admins can update or remove users.</p>
-              <div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button><Button type="submit" disabled={isSaving} className="bg-black text-white dark:bg-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-200">{isSaving ? "Adding…" : "Add user"}</Button></div>
+              <div className="users-dialog-actions flex gap-2"><Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button><Button type="submit" disabled={isSaving} className="bg-black text-white dark:bg-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-200">{isSaving ? "Adding…" : "Add user"}</Button></div>
             </DialogFooter>
           </form>
         </DialogContent>

@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Expand, FileText, Globe, ImageIcon, Maximize2, M
 import { toast } from 'sonner'
 import './control.css'
 import { connectScreen, type ScreenSnapshot } from '@/lib/screen-realtime'
-import { type ControlledAsset } from '@/components/ControlledMedia'
+import type { ControlledAsset } from '@/components/ControlledMedia'
 import { useMediaMetadata } from '@/components/use-media-metadata'
 import { mediaPosition, type MediaControls } from '@/lib/media-controls'
 
@@ -19,18 +19,19 @@ const definitions = [
   { kind: 'video', title: 'Video', description: 'Playback, sound & scaling', icon: Play, tone: 'text-violet-500 bg-violet-500/10' },
   { kind: 'website', title: 'Website', description: 'Address, refresh & page display', icon: Globe, tone: 'text-sky-500 bg-sky-500/10' },
   { kind: 'image', title: 'Image', description: 'Fit, rotation & presentation', icon: ImageIcon, tone: 'text-emerald-500 bg-emerald-500/10' },
+  { kind: 'audio', title: 'Audio', description: 'Playback, sound & timing', icon: Volume2, tone: 'text-amber-500 bg-amber-500/10' },
 ] as const
 function Tool({ label, children, onClick }: { label: string; children: ReactNode; onClick: () => void }) {
-  return <button type="button" onClick={onClick} title={label} aria-label={label} className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-indigo-400 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">{children}</button>
+  return <button type="button" onClick={onClick} title={label} aria-label={label} className="control-icon-button">{children}</button>
 }
 function Setting({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="grid gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}{children}</label>
+  return <label className="control-setting">{label}{children}</label>
 }
 function Choice({ label, value, options, onChange }: { label: string; value: string | number; options: [string | number, string][]; onChange: (value: string) => void }) {
   return <Setting label={label}><select value={value} onChange={e => onChange(e.target.value)} className={field}>{options.map(([v, text]) => <option key={v} value={v}>{text}</option>)}</select></Setting>
 }
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
-  return <label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="accent-indigo-500" />{label}</label>
+  return <label className="control-toggle"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />{label}</label>
 }
 function Range({ label, value, max, onCommit }: { label: string; value: number; max: number; onCommit: (value: number) => void }) {
   const [draft, setDraft] = useState<number | null>(null)
@@ -44,7 +45,7 @@ function AssetControls({ asset, save, connected }: { asset: ControlledAsset; sav
   const [clock, setClock] = useState(() => Date.now())
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => {
-    if (!connected || asset.kind !== 'video' || c.paused || !c.autoplay) return
+    if (!connected || !['video', 'audio'].includes(asset.kind) || c.paused || !c.autoplay) return
     const timer = setInterval(() => setClock(Date.now()), 1000)
     return () => clearInterval(timer)
   }, [connected, asset.kind, c.paused, c.autoplay])
@@ -68,6 +69,14 @@ function AssetControls({ asset, save, connected }: { asset: ControlledAsset; sav
       <div className="grid grid-cols-2 gap-4"><Choice label="Page zoom" value={c.zoom} options={[[75, '75%'], [100, '100%'], [125, '125%'], [150, '150%']]} onChange={v => patch({ zoom: Number(v) })} /><Choice label="Auto refresh" value={c.refresh} options={[[0, 'Off'], [30, 'Every 30 seconds'], [60, 'Every minute'], [300, 'Every 5 minutes']]} onChange={v => patch({ refresh: Number(v) })} /></div><p className="text-xs text-zinc-500">Some websites block embedded display. Use an address that allows iframes.</p>
     </>}
     {asset.kind === 'image' && <><div className="flex justify-end gap-2"><Tool label="Rotate image" onClick={() => patch({ rotation: (c.rotation + 90) % 360 })}><RotateCcw className="size-4" /></Tool><Tool label="Fit image" onClick={() => patch({ fit: 'contain', rotation: 0 })}><Maximize2 className="size-4" /></Tool></div><div className="grid grid-cols-2 gap-4">{scaling}<Choice label="Background" value={c.background} options={[[ 'black', 'Black' ], ['white', 'White'], ['transparent', 'Transparent']]} onChange={v => patch({ background: v as MediaControls['background'] })} /></div></>}
+    {asset.kind === 'audio' && <>
+      <Range label="Position (seconds)" value={elapsed} max={Math.max(duration, elapsed, 1)} onCommit={v => patch({ position: v })} />
+      <p className="text-xs text-zinc-500">{time(elapsed)} / {duration ? time(duration) : 'Loading duration…'}</p>
+      <div className="control-command-row"><div className="control-button-group"><Tool label="Back 10 seconds" onClick={() => patch({ position: Math.max(0, elapsed - 10) })}><SkipBack className="size-4" /></Tool><Tool label="Play" onClick={() => patch({ paused: false })}><Play className="size-4" /></Tool><Tool label="Pause" onClick={() => patch({ paused: true })}><Pause className="size-4" /></Tool><Tool label="Forward 10 seconds" onClick={() => patch({ position: Math.min(duration || 604800, elapsed + 10) })}><SkipForward className="size-4" /></Tool></div><span className="control-play-state"><Volume2 className="size-4" />{c.paused || !c.autoplay ? 'Paused' : 'Playing'}</span></div>
+      <Range label="Volume" value={c.volume} max={100} onCommit={v => patch({ volume: v })} />
+      <Choice label="Playback speed" value={c.rate} options={[[0.5, '0.5×'], [1, '1× Normal'], [1.5, '1.5×'], [2, '2×']]} onChange={v => patch({ rate: Number(v) })} />
+      <div className="control-toggle-row"><Toggle label="Loop" checked={c.loop} onChange={v => patch({ loop: v })} /><Toggle label="Autoplay" checked={c.autoplay} onChange={v => patch({ autoplay: v })} /></div>
+    </>}
   </>
 }
 export default function ControlPage() {
@@ -145,13 +154,13 @@ export default function ControlPage() {
     {ready && screenId && connectionState === 'disconnected' && !data && <p className={`${surface} p-6 text-sm text-zinc-500`}>Click Connect to start a five-minute live control session.</p>}
     <div className="control-grid">{data?.assets.map((asset, index) => {
       const definition = definitions.find(item => item.kind === asset.kind)
-      const { title, description, icon: Icon, tone } = definition || { title: 'File', description: 'Assigned content', icon: FileText, tone: 'text-zinc-500 bg-zinc-500/10' }
+      const { title, icon: Icon, tone } = definition || { title: 'File', icon: FileText, tone: 'text-zinc-500 bg-zinc-500/10' }
       return <section key={asset.id} aria-label={`${title} controls: ${asset.document.name}`} className={`${surface} control-card min-w-0`}>
         <header className="flex items-start gap-3 border-b border-zinc-200 p-5 dark:border-zinc-800">
           <span className={`shrink-0 rounded-xl p-3 ${tone}`}><Icon className="size-5" /></span>
-          <div className="min-w-0 flex-1"><p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Item {index + 1} · {title}</p><h2 className="break-words text-base font-semibold text-zinc-900 dark:text-white">{asset.document.name}</h2><p className="mt-1 text-xs text-zinc-500">{description}</p></div>
+          <div className="min-w-0 flex-1"><p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Item {index + 1} · {title}</p><h2 className="break-words text-base font-semibold text-zinc-900 dark:text-white">{asset.document.name}</h2></div>
         </header>
-        <div className="p-5">{definition ? <fieldset disabled={saving || !canEdit || connectionState !== 'connected'} className="min-w-0 space-y-5 disabled:opacity-60"><legend className="sr-only">Controls for {asset.document.name}</legend><AssetControls asset={asset} save={save} connected={connectionState === 'connected'} /></fieldset> : <p className="text-sm text-zinc-500">Controls are available for PDF, video, website, and image assets.</p>}</div>
+        <div className="control-card-controls">{definition ? <fieldset disabled={saving || !canEdit || connectionState !== 'connected'} className="min-w-0 space-y-5 disabled:opacity-60"><legend className="sr-only">Controls for {asset.document.name}</legend><AssetControls asset={asset} save={save} connected={connectionState === 'connected'} /></fieldset> : <p className="text-sm text-zinc-500">Controls are available for PDF, video, website, image, and audio assets.</p>}</div>
       </section>
     })}</div>
   </div></div>

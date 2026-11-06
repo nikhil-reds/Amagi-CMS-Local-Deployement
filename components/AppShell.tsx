@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
 import "./responsive.css"
 
-// Navigation: drawer on phones, icon rail on tablets, full sidebar on desktops.
+// Navigation: overlay drawer on phones/tablets, icon rail on tablets, full sidebar on desktops.
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -37,21 +37,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               type="button"
               variant="ghost"
               size="icon"
-              className="size-10 md:hidden"
+              className="size-10 lg:hidden"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open navigation"
+              aria-controls="navigation-drawer"
+              aria-expanded={isSidebarOpen}
             >
               <Menu className="size-5" />
             </Button>
           }
         />
 
-        {/* Phone drawer */}
+        {/* Phone and tablet overlay drawer */}
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetContent
+            id="navigation-drawer"
             side="left"
-            showCloseButton={false}
-            className="w-72 max-w-[85vw] gap-0 bg-black p-0 md:hidden"
+            className="w-72 max-w-[85vw] gap-0 bg-black p-0 lg:hidden"
           >
             <SheetTitle className="sr-only">Main navigation</SheetTitle>
             <SheetDescription className="sr-only">Navigate between dashboard pages</SheetDescription>

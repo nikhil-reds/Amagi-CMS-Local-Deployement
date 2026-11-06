@@ -1,27 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-
-const poppins = localFont({
-  src: [
-    { path: "../public/Poppins/Poppins-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../public/Poppins/Poppins-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../public/Poppins/Poppins-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "../public/Poppins/Poppins-Bold.ttf", weight: "700", style: "normal" },
-  ],
-  variable: "--font-poppins",
-  display: "swap",
-});
-
-const abroSans = localFont({
-  src: [
-    { path: "../public/AbroSans/OpenType-TT/AbroSans-Thin.ttf", weight: "100", style: "normal" },
-    { path: "../public/AbroSans/OpenType-TT/AbroSans-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../public/AbroSans/OpenType-TT/AbroSans-Bold.ttf", weight: "700", style: "normal" },
-  ],
-  variable: "--font-abro-sans",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -46,7 +24,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${abroSans.variable} h-full antialiased`}
+      className="h-full antialiased"
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

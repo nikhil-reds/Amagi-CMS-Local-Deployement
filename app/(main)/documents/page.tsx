@@ -103,9 +103,12 @@ function AssetPreview({ doc, large = false }: { doc: Document; large?: boolean }
   }
 
   if (doc.mimeType === 'application/pdf') {
+    const pdfPreviewUrl = large
+      ? `${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`
+      : previewUrl
     return (
       <iframe
-        src={previewUrl}
+        src={pdfPreviewUrl}
         title={doc.name}
         className={`${previewClass} border-0 bg-zinc-50`}
       />
@@ -760,7 +763,7 @@ export default function DocumentsDashboard() {
           /* Table View */
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto overscroll-contain">
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
               <Table className="relative">
                 <TableHeader className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800 sticky top-0 z-10">
                   <TableRow>
@@ -861,13 +864,13 @@ export default function DocumentsDashboard() {
               </Table>
               </div>
 
-              {/* Phone layout: one card per document instead of a wide table. */}
-              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/60 md:hidden">
+              {/* Touch layout: cards replace the wide table on phones and tablets. */}
+              <ul className="documents-card-list divide-y divide-zinc-100 dark:divide-zinc-800/60 lg:hidden">
                 {paginatedDocs.map((doc) => {
                   const isSelected = selectedIds.includes(doc.id)
                   const isWebsite = doc.sourceType === 'WEBSITE' || Boolean(doc.websiteUrl)
                   return (
-                    <li key={doc.id} className={`flex items-start gap-3 p-3 ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
+                    <li key={doc.id} className={`documents-card flex items-start gap-3 p-3 ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -878,7 +881,7 @@ export default function DocumentsDashboard() {
                       <button
                         type="button"
                         onClick={() => setSelectedDetailDoc(doc)}
-                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                        className="documents-card-main flex min-w-0 flex-1 items-start gap-3 text-left"
                       >
                         <div className={`size-11 shrink-0 overflow-hidden rounded-lg flex items-center justify-center shadow-sm ${iconBg(doc.mimeType)}`}>
                           <AssetPreview doc={doc} />
@@ -981,14 +984,14 @@ export default function DocumentsDashboard() {
 
       {/* 6. Document Preview and Details Modal */}
       <Dialog open={selectedDetailDoc !== null} onOpenChange={(open) => !open && setSelectedDetailDoc(null)}>
-        <DialogContent data-documents-dialog className="max-w-[calc(100%-1rem)] overflow-y-auto md:overflow-hidden rounded-2xl bg-white dark:bg-zinc-950 p-0 shadow-2xl sm:max-w-5xl">
+        <DialogContent data-documents-dialog className="documents-detail-dialog max-w-[calc(100%-1rem)] rounded-2xl bg-white dark:bg-zinc-950 p-0 shadow-2xl sm:max-w-5xl">
           {selectedDetailDoc && (
-            <div className="grid grid-cols-1 md:max-h-[90vh] md:overflow-hidden md:grid-cols-[1fr_360px]">
-              <div className="min-h-[240px] sm:min-h-[360px] bg-zinc-950 dark:bg-black">
+            <div className="documents-detail-layout grid grid-cols-1">
+              <div className="documents-detail-preview min-h-[240px] bg-zinc-950 dark:bg-black">
                 <AssetPreview doc={selectedDetailDoc} large />
               </div>
 
-              <div className="flex flex-col p-4 sm:p-6 md:max-h-[90vh] md:overflow-y-auto">
+              <div className="documents-detail-panel flex flex-col p-4 sm:p-6">
                 <DialogHeader className="pr-8">
                   <div className={`mb-2 flex h-12 w-12 items-center justify-center rounded-xl ${iconBg(selectedDetailDoc.mimeType)} shadow-sm`}>
                     <FileIcon mimeType={selectedDetailDoc.mimeType} className="h-6 w-6" />
@@ -1001,7 +1004,7 @@ export default function DocumentsDashboard() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="mt-6 space-y-4 border-t border-zinc-100 dark:border-zinc-800 pt-6 text-xs">
+                <div className="documents-detail-meta mt-6 space-y-4 border-t border-zinc-100 dark:border-zinc-800 pt-6 text-xs">
                   <div className="grid grid-cols-3 gap-3">
                     <span className="font-medium text-zinc-400 dark:text-zinc-500">File Type</span>
                     <span className="col-span-2 break-all font-mono font-semibold uppercase text-zinc-800 dark:text-zinc-200">
@@ -1063,7 +1066,7 @@ export default function DocumentsDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-auto flex flex-col gap-2.5 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+                <div className="documents-detail-actions mt-auto flex flex-col gap-2.5 border-t border-zinc-100 dark:border-zinc-800 pt-6">
                   <a
                     href={selectedDetailDoc.websiteUrl || selectedDetailDoc.s3Url || '#'}
                     download={selectedDetailDoc.websiteUrl ? undefined : selectedDetailDoc.name}

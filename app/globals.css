@@ -102,6 +102,8 @@ body {
 .touch-dragging { touch-action: none; }
 
 :root {
+  --font-poppins: "Segoe UI", Arial, sans-serif;
+  --font-abro-sans: "Segoe UI", Arial, sans-serif;
   --background: #ffffff;
   --foreground: #0a0f34;
   --card: #ffffff;

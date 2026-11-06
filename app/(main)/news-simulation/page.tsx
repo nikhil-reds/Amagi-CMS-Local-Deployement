@@ -10,6 +10,7 @@ const ports = Array.from({ length: 12 }, (_, index) => 3000 + index)
 
 export default function NewsSimulationPage() {
   const [screens, setScreens] = useState<SimulationScreen[]>([])
+  const [address, setAddress] = useState('localhost')
   const [port, setPort] = useState(3000)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -28,7 +29,10 @@ export default function NewsSimulationPage() {
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || 'Failed to load screens')
         setScreens(data)
-        if (data.length) setPort(data[0].port)
+        if (data.length) {
+          setPort(data[0].port)
+          try { setAddress(new URL(data[0].url).hostname) } catch {}
+        }
         const stateResponse = await fetch('/api/news-simulation/session', { signal: controller.signal, cache: 'no-store' })
         const state = await stateResponse.json()
         if (!stateResponse.ok) throw new Error(state.error || 'Failed to load simulation state')
@@ -75,7 +79,7 @@ export default function NewsSimulationPage() {
       const response = await fetch('/api/news-simulation', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ port }),
+        body: JSON.stringify({ address, port }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to save screens')
@@ -93,14 +97,22 @@ export default function NewsSimulationPage() {
       <header className="news-simulation-heading">
         <h1>News Simulation</h1>
         <div className="news-simulation-source">
-          <label htmlFor="simulation-port">Universal localhost port</label>
-          <div className="news-simulation-select">
-            <span>localhost:</span>
-            <select id="simulation-port" value={port} disabled={loading || saving || changing || active} onChange={(event) => { setPort(Number(event.target.value)); setMessage("") }} aria-label="Universal localhost port for all screens">
-              {ports.map((port) => <option key={port} value={port}>{port}</option>)}
-            </select>
-            <ChevronDown size={14} aria-hidden="true" />
+          <div className="news-simulation-fields">
+            <label>
+              <span>Universal IP address</span>
+              <input value={address} disabled={loading || saving || changing || active} onChange={(event) => { setAddress(event.target.value); setMessage("") }} placeholder="192.168.1.100" inputMode="url" autoComplete="url" aria-label="Universal IP address for all simulation screens" />
+            </label>
+            <label>
+              <span>Universal port</span>
+              <div className="news-simulation-select">
+                <select id="simulation-port" value={port} disabled={loading || saving || changing || active} onChange={(event) => { setPort(Number(event.target.value)); setMessage("") }} aria-label="Universal port for all simulation screens">
+                  {ports.map((port) => <option key={port} value={port}>{port}</option>)}
+                </select>
+                <ChevronDown size={14} aria-hidden="true" />
+              </div>
+            </label>
           </div>
+          <p className="news-simulation-origin">Static base URL: <strong>http://{address.trim() || '<IP address>'}:{port}</strong></p>
           <button className="news-simulation-save" type="button" onClick={savePort} disabled={loading || saving || changing || active}>{saving ? 'Saving…' : 'Save all screens'}</button>
         </div>
       </header>
@@ -128,7 +140,7 @@ export default function NewsSimulationPage() {
       <div className="news-simulation-table-wrap">
         <table className="news-simulation-table" aria-label="News simulation screen ports">
           <thead>
-            <tr><th scope="col">Screen Name</th><th scope="col">Port</th><th scope="col">URL</th></tr>
+            <tr><th scope="col">News Simulation Screen</th><th scope="col">Port</th><th scope="col">URL</th></tr>
           </thead>
           <tbody>
             {loading && <tr><td colSpan={3}>Loading screens…</td></tr>}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Clock, Copy, ExternalLink, Info, Monitor, PlusCircle, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import '../main-screen/main-screen.css'
 import './screens.css'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -31,6 +32,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { formatDate } from '@/components/main-screen/shared'
+import FilePanel from '@/components/main-screen/FilePanel'
+import ScreenPanel from '@/components/main-screen/ScreenPanel'
 
 type AssignedAsset = {
   id: string
@@ -183,7 +186,19 @@ export default function ScreensDashboard() {
   // Screens presentation; existing data and event handlers are preserved.
   return (
     <div className="screens-page" data-screens-ui>
-      <header className="screens-header">
+      <section className="screens-tablet-workspace main-screen-page" aria-label="Tablet media assignment workspace">
+        <header className="main-screen-heading">
+          <p className="screens-tablet-breadcrumb">Home <span aria-hidden="true">›</span> Media Workspace</p>
+          <h1>Main Screen</h1>
+          <p>Build what each screen plays. Drag media from the library or use the assign button.</p>
+        </header>
+        <div className="main-screen-workspace">
+          <FilePanel />
+          <ScreenPanel />
+        </div>
+      </section>
+
+      <header className="screens-header screens-management-only">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Screens</h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Manage your connected displays.</p>
@@ -223,7 +238,7 @@ export default function ScreensDashboard() {
         </div>
       </header>
 
-      <section aria-label="Screen statistics" className="screens-stats grid grid-cols-2 gap-3 sm:gap-5 shrink-0">
+      <section aria-label="Screen statistics" className="screens-stats screens-management-only grid grid-cols-2 gap-3 sm:gap-5 shrink-0">
         <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg">
           <div className="flex items-center justify-between text-zinc-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Screens</span>
@@ -246,8 +261,8 @@ export default function ScreensDashboard() {
       </section>
 
       {selectedIds.length > 0 && (
-        <div className="screens-bulk bg-black text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl flex items-center justify-between shadow-lg shrink-0">
-          <span className="text-xs font-semibold">
+        <div className="screens-bulk screens-management-only bg-black text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl flex items-center justify-between shadow-lg shrink-0">
+          <span className="text-xs font-semibold" role="status" aria-live="polite">
             {selectedIds.length} screen{selectedIds.length !== 1 ? 's' : ''} selected
           </span>
           <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
@@ -263,7 +278,7 @@ export default function ScreensDashboard() {
                   Are you sure you want to delete these {selectedIds.length} selected screens?
                 </DialogDescription>
               </DialogHeader>
-              <DialogFooter className="mt-4">
+              <DialogFooter className="screens-dialog-footer mt-4">
                 <Button variant="outline" onClick={() => setIsBulkDeleteOpen(false)} className="text-xs">Cancel</Button>
                 <Button onClick={handleBulkDelete} className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2">Delete</Button>
               </DialogFooter>
@@ -272,7 +287,7 @@ export default function ScreensDashboard() {
         </div>
       )}
 
-      <section aria-label="Registered screens" className="screens-list flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+      <section aria-label="Registered screens" className="screens-list screens-management-only flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
         {loading ? (
           <div className="p-6 space-y-4">
             {Array.from({ length: 5 }).map((_, idx) => (
@@ -295,20 +310,20 @@ export default function ScreensDashboard() {
         ) : (
           <>
           {/* Phone layout: cards instead of a table. */}
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/60 md:hidden">
+          <ul className="screens-cards divide-y divide-zinc-100 dark:divide-zinc-800/60">
             {filteredScreens.map((screen) => {
               const isSelected = selectedIds.includes(screen.id)
               const assignedAsset = screen.assets?.[0]?.document
               return (
-                <li key={screen.id} className={`flex items-start gap-3 p-3 ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
+                <li key={screen.id} className={`screens-card ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleSelectRow(screen.id)}
                     aria-label={`Select ${screen.name}`}
-                    className="mt-3 size-4 shrink-0 accent-black cursor-pointer"
+                    className="screens-card-select size-4 shrink-0 accent-black cursor-pointer"
                   />
-                  <button type="button" onClick={() => setSelectedDetailScreen(screen)} className="min-w-0 flex-1 space-y-1 text-left">
+                  <button type="button" onClick={() => setSelectedDetailScreen(screen)} className="screens-card-body min-w-0 space-y-1 text-left">
                     <span className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
                       <Monitor className="size-4 shrink-0 text-zinc-500" />
                       <span className="truncate">{screen.name}</span>
@@ -318,7 +333,7 @@ export default function ScreensDashboard() {
                     </span>
                     <span className="block text-[11px] text-zinc-400 dark:text-zinc-500">{formatDate(screen.createdAt)}</span>
                   </button>
-                  <div className="flex shrink-0 gap-0.5">
+                  <div className="screens-card-actions">
                     <button
                       onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
                       className="flex size-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -346,7 +361,7 @@ export default function ScreensDashboard() {
               )
             })}
           </ul>
-          <div className="hidden flex-1 overflow-y-auto md:block">
+          <div className="screens-table flex-1 overflow-y-auto">
           <Table>
             <TableHeader className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
               <TableRow>
@@ -361,7 +376,7 @@ export default function ScreensDashboard() {
                 </TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Screen Name</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">What it plays</TableHead>
-                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 hidden lg:table-cell">Created Date</TableHead>
+                <TableHead className="screens-created-column text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Created Date</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -400,7 +415,7 @@ export default function ScreensDashboard() {
                         <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Nothing assigned yet</span>
                       )}
                     </TableCell>
-                    <TableCell className="p-4 hidden lg:table-cell text-xs text-zinc-500 dark:text-zinc-400">{formatDate(screen.createdAt)}</TableCell>
+                    <TableCell className="screens-created-column p-4 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(screen.createdAt)}</TableCell>
                     <TableCell className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -454,7 +469,7 @@ export default function ScreensDashboard() {
               Are you sure you want to delete this screen? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-4">
+          <DialogFooter className="screens-dialog-footer mt-4">
             <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="text-xs">Cancel</Button>
             <Button
               onClick={() => deleteConfirmId && handleDeleteScreen(deleteConfirmId)}
@@ -467,7 +482,7 @@ export default function ScreensDashboard() {
       </Dialog>
 
       <Sheet open={selectedDetailScreen !== null} onOpenChange={(open) => !open && setSelectedDetailScreen(null)}>
-        <SheetContent data-screens-drawer className="w-full sm:max-w-md bg-white dark:bg-zinc-950 p-4 sm:p-6 overflow-y-auto shadow-2xl flex flex-col gap-6">
+        <SheetContent data-screens-drawer className="w-full sm:max-w-md bg-white dark:bg-zinc-950 p-4 sm:p-6 overflow-hidden shadow-2xl flex flex-col gap-0">
           {selectedDetailScreen && (
             <>
               <SheetHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -479,7 +494,7 @@ export default function ScreensDashboard() {
                   Screen registration details.
                 </SheetDescription>
               </SheetHeader>
-              <div className="space-y-4 text-xs">
+              <div className="screens-drawer-body space-y-4 text-xs">
                 <div className="grid grid-cols-3 gap-3">
                   <span className="text-zinc-400 dark:text-zinc-500 font-medium">Created</span>
                   <span className="col-span-2 text-zinc-800 dark:text-zinc-100 font-semibold">{formatDate(selectedDetailScreen.createdAt)}</span>

@@ -19,7 +19,16 @@ export async function PUT(request: Request) {
   if (denied) return denied
 
   const body = await request.json().catch(() => null)
+  const address = typeof body?.address === 'string' ? body.address.trim() : ''
   const port = body?.port
+  let host = ''
+  try {
+    const parsed = new URL(`http://${address}`)
+    if (parsed.username || parsed.password || parsed.port || parsed.pathname !== '/' || parsed.search || parsed.hash) throw new Error()
+    host = parsed.hostname
+  } catch {
+    return NextResponse.json({ error: 'Enter a valid IP address or hostname without a protocol, port or path' }, { status: 400 })
+  }
   if (!Number.isInteger(port) || port < 3000 || port > 3011) {
     return NextResponse.json({ error: 'Select a port between 3000 and 3011' }, { status: 400 })
   }
@@ -31,9 +40,9 @@ export async function PUT(request: Request) {
       if (state?.active) return null
       return Promise.all(Array.from({ length: 18 }, (_, index) => {
         const screenNumber = index + 1
-        const name = screenNumber <= 12 ? `Screen ${screenNumber}` : `broadcast${String(screenNumber - 12).padStart(2, '0')}`
+        const name = `News Simulation Screen ${String(screenNumber).padStart(2, '0')}`
         const path = screenNumber <= 12 ? `screen${screenNumber}` : `broadcast${screenNumber - 12}`
-        const data = { name, port, url: `http://localhost:${port}/${path}` }
+        const data = { name, port, url: `http://${host}:${port}/${path}` }
         return tx.newsSimulationScreen.upsert({
           where: { screenNumber },
           create: { screenNumber, ...data },

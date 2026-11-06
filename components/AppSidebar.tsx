@@ -121,9 +121,9 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
   return (
     <aside className={cn("console-sidebar", compact && "console-sidebar-compact")}>
       <div className="console-sidebar-brand">
-        <div className="console-sidebar-logo" style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={{ fontSize: compact ? 10 : 11, fontWeight: 500, letterSpacing: "0.08em", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>mini</span>
-          <span style={{ fontSize: compact ? 18 : 22, fontWeight: 700, letterSpacing: "0.04em", color: "#fff" }}>XOS</span>
+        <div className="console-sidebar-logo">
+          <span className="console-sidebar-logo-prefix">mini</span>
+          <span className="console-sidebar-logo-wordmark">XOS</span>
         </div>
       </div>
 

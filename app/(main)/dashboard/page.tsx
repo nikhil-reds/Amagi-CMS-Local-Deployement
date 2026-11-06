@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUp, Copy, ExternalLink, FileText, ImageIcon, Clock, Monitor, Upload, Video } from 'lucide-react'
-import { toast } from 'sonner'
+import { ArrowUp, FileText, ImageIcon, Clock, Upload, Video } from 'lucide-react'
 import './dashboard.css'
 import { formatBytes, formatDate } from '@/components/main-screen/shared'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,14 +23,6 @@ type SessionItem = {
   status: string
   createdAt: string
   _count?: { documents: number }
-}
-
-type ScreenItem = {
-  id: string
-  code: string
-  name: string
-  createdAt: string
-  updatedAt: string
 }
 
 function StatusChip({ status }: { status: string }) {
@@ -78,7 +69,6 @@ function Meter({ parts }: { parts: { label: string; value: number; className: st
 export default function DashboardPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [sessions, setSessions] = useState<SessionItem[]>([])
-  const [screens, setScreens] = useState<ScreenItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -87,13 +77,11 @@ export default function DashboardPage() {
     Promise.all([
       fetch('/api/documents').then((res) => (res.ok ? res.json() : [])),
       fetch('/api/sessions').then((res) => (res.ok ? res.json() : [])),
-      fetch('/api/screens').then((res) => (res.ok ? res.json() : [])),
     ])
-      .then(([docs, sessionData, screenData]) => {
+      .then(([docs, sessionData]) => {
         if (cancelled) return
         setDocuments(Array.isArray(docs) ? docs : [])
         setSessions(Array.isArray(sessionData) ? sessionData : [])
-        setScreens(Array.isArray(screenData) ? screenData : [])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -126,7 +114,7 @@ export default function DashboardPage() {
       <header className="dashboard-head">
         <div>
           <h1>Dashboard</h1>
-          <p>Sessions, documents and screens at a glance</p>
+          <p>Sessions and documents at a glance</p>
         </div>
         <Link href="/documents" className="dashboard-upload">
           <span>Upload files</span>
@@ -139,7 +127,7 @@ export default function DashboardPage() {
       {loading ? (
         <div className="dashboard-loading">
           <div className="dashboard-kpis">
-            {Array.from({ length: 5 }).map((_, idx) => (
+            {Array.from({ length: 4 }).map((_, idx) => (
               <Skeleton key={idx} className="h-28 rounded-[18px] bg-white/5" />
             ))}
           </div>
@@ -166,11 +154,6 @@ export default function DashboardPage() {
               <span>Sessions</span>
               <b>{sessions.length}</b>
               <small>{stats.completedSessions} completed</small>
-            </div>
-            <div className="glass dashboard-kpi">
-              <span>Screens</span>
-              <b>{screens.length}</b>
-              <small>registered displays</small>
             </div>
             <div className="glass dashboard-kpi">
               <span>Added today</span>
@@ -255,41 +238,6 @@ export default function DashboardPage() {
                 ))}
               </ul>
             </article>
-          </section>
-
-          <h3 className="dashboard-sec">Screens</h3>
-          <section aria-label="Screens" className="dashboard-screens">
-            {screens.length === 0 ? (
-              <p className="dashboard-empty">No screens registered.</p>
-            ) : screens.map((screen) => (
-              <article key={screen.id} className="glass dashboard-screen">
-                <div className="dashboard-pv">
-                  <Monitor className="size-6" aria-hidden="true" />
-                </div>
-                <div className="dashboard-screen-meta">
-                  <div>
-                    <b>{screen.name}</b>
-                    <small>Created {formatDate(screen.createdAt)}</small>
-                  </div>
-                  <div className="dashboard-screen-actions">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(screen.code)
-                        toast.success('Screen ID copied')
-                      }}
-                      title="Copy screen ID"
-                      aria-label={`Copy ID for ${screen.name}`}
-                    >
-                      <Copy className="size-4" />
-                    </button>
-                    <Link href={`/view/screen/${screen.code}`} target="_blank" title="Open Screen" aria-label={`Open ${screen.name}`}>
-                      <ExternalLink className="size-4" />
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
           </section>
         </>
       )}
