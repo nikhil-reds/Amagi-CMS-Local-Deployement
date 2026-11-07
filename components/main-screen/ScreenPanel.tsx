@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import { ExternalLink, FileText, Globe2, Monitor, Plus, Trash2, Upload, X } from 'lucide-react'
+import { ExternalLink, FileText, Globe2, Monitor, Pin, Plus, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { FileIcon, iconBg } from './shared'
 import { PreviewSkeleton, ScreenGridSkeleton } from './skeletons'
@@ -138,8 +138,10 @@ function extractUrl(dataTransfer: DataTransfer) {
   }
 }
 
-export default function ScreenPanel() {
+export default function ScreenPanel({ pinnable = false }: { pinnable?: boolean }) {
   const [screens, setScreens] = useState<Screen[]>([])
+  const [pinnedScreenId, setPinnedScreenId] = useState<string | null>(null)
+  const pinnedCard = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
@@ -148,6 +150,15 @@ export default function ScreenPanel() {
   const [pickDocument, setPickDocument] = useState<DocumentAsset | null>(null)
   const [addTargetId, setAddTargetId] = useState<string | null>(null)
   const [linkValue, setLinkValue] = useState('')
+
+  const pinnedScreen = pinnable ? screens.find((screen) => screen.id === pinnedScreenId) : undefined
+  const orderedScreens = pinnedScreen
+    ? [pinnedScreen, ...screens.filter((screen) => screen.id !== pinnedScreen.id)]
+    : screens
+
+  useEffect(() => {
+    if (pinnedScreenId) pinnedCard.current?.scrollIntoView({ block: 'start' })
+  }, [pinnedScreenId])
 
   useEffect(() => {
     fetch('/api/screens')
@@ -190,6 +201,7 @@ export default function ScreenPanel() {
       }
 
       setScreens((prev) => prev.filter((screen) => screen.id !== id))
+      setPinnedScreenId((previousId) => previousId === id ? null : previousId)
       const result = await res.json()
       if (result.realtime?.delivered === false) toast.error('Screen removed, but live delivery failed. Reconnect the player.')
       else toast.success('Screen removed')
@@ -416,16 +428,19 @@ export default function ScreenPanel() {
           </div>
         ) : (
           <div className="main-screen-grid" data-autoscroll>
-            {screens.map((screen) => {
+            {orderedScreens.map((screen) => {
               const assets = screen.assets || []
               const primaryAsset = assets[0]
               const isFull = assets.length >= MAX_ASSETS_PER_SCREEN
               const isActiveDrop = dragOverId === screen.id
+              const isPinned = pinnedScreen?.id === screen.id
 
               return (
                 <div
                   key={screen.id}
+                  ref={isPinned ? pinnedCard : undefined}
                   data-drop-screen={screen.id}
+                  data-pinned={isPinned || undefined}
                   onDragOver={(event) => {
                     event.preventDefault()
                     event.dataTransfer.dropEffect = 'copy'
@@ -461,6 +476,18 @@ export default function ScreenPanel() {
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1 max-sm:justify-end">
+                      {pinnable && (
+                        <button
+                          type="button"
+                          onClick={() => setPinnedScreenId(isPinned ? null : screen.id)}
+                          className="flex size-9 items-center justify-center rounded-lg md:size-8"
+                          aria-label={`Pin ${screen.name}`}
+                          aria-pressed={isPinned}
+                          title={isPinned ? 'Unpin screen' : 'Pin screen'}
+                        >
+                          <Pin className="size-4" aria-hidden="true" />
+                        </button>
+                      )}
                       <button
                         onClick={() => setAddTargetId(screen.id)}
                         disabled={isFull}
