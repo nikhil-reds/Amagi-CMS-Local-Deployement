@@ -15,7 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     // Console is always dark, so every page shares the reference black and aurora.
-    <div className="dark min-h-dvh bg-black text-white md:flex">
+    <div className="dark h-dvh bg-black text-white md:flex overflow-hidden" suppressHydrationWarning>
       <div className="console-background" aria-hidden="true">
         <div className="console-aurora"><i /><i /><i /></div>
       </div>
@@ -30,7 +30,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <AppSidebar />
       </div>
 
-      <div className="relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col md:pl-[72px] lg:pl-[232px]">
+      <div className="relative z-10 flex h-dvh min-w-0 flex-1 flex-col md:pl-[72px] lg:pl-[232px] overflow-hidden">
         <Navbar
           menuControl={
             <Button
@@ -61,7 +61,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </SheetContent>
         </Sheet>
 
-        <main className="console-content min-w-0 flex-1">
+        <main className="console-content min-w-0 flex-1 overflow-y-auto overscroll-contain">
           {children}
         </main>
       </div>
