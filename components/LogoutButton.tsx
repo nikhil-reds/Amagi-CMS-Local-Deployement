@@ -12,8 +12,11 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
   const router = useRouter()
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [signingOut, setSigningOut] = useState(false)
+  // Prevents hydration mismatch: user data is only available after first client fetch.
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     fetch("/api/auth/me")
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setUser(data?.user ?? null))
@@ -36,7 +39,8 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
 
   return (
     <div className="console-sidebar-account">
-      {user && !compact ? (
+      {/* Only render user info after mount to avoid SSR/client mismatch */}
+      {mounted && user && !compact ? (
         <div className="console-sidebar-profile">
           <div className="console-sidebar-avatar" aria-hidden="true">
             {user.name.charAt(0).toUpperCase()}
