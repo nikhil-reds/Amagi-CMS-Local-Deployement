@@ -45,15 +45,32 @@
 .main-screen-page [data-screen-panel] > div:first-child h2 { font-size: 15px; font-weight: 400; text-transform: none; letter-spacing: normal; color: #ffffffb3; }
 .main-screen-page [data-screen-panel] > div:first-child button { min-height: 40px; padding: 0 16px 0 12px; border-radius: 999px; background: #fff; color: #000; font-size: 14px; font-weight: 400; }
 .main-screen-page [data-screen-panel] > [data-autoscroll] { padding: 0; overflow: visible; }
-.main-screen-page .main-screen-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; overflow: visible; padding: 0; align-items: start; }
+.main-screen-page .main-screen-grid {
+  --screen-columns: 3;
+  --screen-gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(var(--screen-columns), minmax(0, 1fr));
+  gap: var(--screen-gap);
+  overflow: visible;
+  padding: 0;
+  align-items: start;
+}
 .main-screen-page [data-drop-screen] { display: flex; flex-direction: column; aspect-ratio: auto; width: auto; min-width: 0; padding: 16px; gap: 16px; border-radius: 20px; background: rgba(22,22,26,.55); border: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 0 1px rgba(255,255,255,.07); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); }
 .main-screen-page [data-drop-screen]:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 0 1px rgba(255,255,255,.22); }
 .main-screen-page [data-drop-screen][class*="ring-4"] { box-shadow: inset 0 0 0 1px #fff, 0 0 35px #9b4dff40; }
+.main-screen-page [data-drop-screen][data-pinned] {
+  /* Keep 30% of the width increase from a regular card to the full row. */
+  --screen-column-width: calc((100% + var(--screen-gap)) / var(--screen-columns) - var(--screen-gap));
+  grid-column: 1 / -1;
+  width: calc(30% + 0.7 * var(--screen-column-width));
+  scroll-margin-top: 16px;
+}
 .main-screen-page .main-screen-card-heading { position: static; order: 0; flex-direction: row; align-items: center; padding: 0; flex-wrap: wrap; gap: 8px; background: none; }
 .main-screen-page .main-screen-card-heading p:first-child { font-size: 16px; font-weight: 400; color: #fff; }
 .main-screen-page .main-screen-card-heading p + p { margin-top: 4px; font-size: 11px; color: #ffffff65; }
 .main-screen-page .main-screen-card-heading button { border-radius: 50%; background: transparent; color: #ffffff80; box-shadow: none; --tw-ring-shadow: 0 0 #0000; }
 .main-screen-page .main-screen-card-heading button:hover { background: #ffffff10; color: #fff; }
+.main-screen-page .main-screen-card-heading button[aria-pressed="true"] { background: #ffffff20; color: #fff; }
 .main-screen-page .main-screen-card-heading button[title="Remove screen"]:hover { color: #ff8a7a; }
 .main-screen-page .main-screen-preview { position: relative; inset: auto; order: 1; width: 100%; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: #050507; box-shadow: inset 0 0 0 1px #ffffff14; }
 .main-screen-page .main-screen-preview img, .main-screen-page .main-screen-preview video { object-fit: contain; }
@@ -73,12 +90,12 @@
 [data-main-screen-sheet] label[class*="bg-black"] { background: #fff; color: #000; border-radius: 999px; }
 @container (max-width: 1000px) {
   .main-screen-workspace { grid-template-columns: minmax(0, 1fr); }
-  .main-screen-page .main-screen-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .main-screen-page .main-screen-grid { --screen-columns: 2; }
   .main-screen-page [data-screen-library] { max-height: 340px; }
   .main-screen-page [data-screen-panel] { min-height: 280px; }
 }
 @container (max-width: 600px) {
-  .main-screen-page .main-screen-grid { grid-template-columns: minmax(0,1fr); }
+  .main-screen-page .main-screen-grid { --screen-columns: 1; }
 }
 @media (max-width: 1023px) {
   .main-screen-page { padding-inline: 24px; }
@@ -97,7 +114,7 @@
   .main-screen-page .main-screen-library-hint { padding: 0 12px 12px; font-size: 10px; }
   .main-screen-page [data-screen-panel] { min-height: 0; }
   .main-screen-page [data-screen-panel] > div:first-child { margin-bottom: 0; padding: 0 4px 12px; }
-  .main-screen-page .main-screen-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+  .main-screen-page .main-screen-grid { --screen-columns: 2; --screen-gap: 14px; }
   .main-screen-page [data-drop-screen] { padding: 12px; gap: 12px; border-radius: 16px; }
   .main-screen-page .main-screen-card-heading p:first-child { font-size: 14px; }
   .main-screen-page .main-screen-preview { border-radius: 11px; }
@@ -106,15 +123,20 @@
 }
 @media (min-width: 700px) and (max-width: 880px) {
   .main-screen-workspace { grid-template-columns: 220px minmax(0,1fr); gap: 12px; }
-  .main-screen-page .main-screen-grid { grid-template-columns: minmax(0,1fr); }
+  .main-screen-page .main-screen-grid { --screen-columns: 1; }
 }
 @media (max-width: 640px) {
   .main-screen-page { padding: 22px 16px max(24px, env(safe-area-inset-bottom)); }
-  .main-screen-workspace, .main-screen-page .main-screen-grid { gap: 16px; }
+  .main-screen-workspace { gap: 16px; }
+  .main-screen-page .main-screen-grid { --screen-gap: 16px; }
   .main-screen-heading h1 { font-size: 34px; }
   .main-screen-heading p { max-width: 38ch; font-size: 13px; line-height: 1.5; }
   .main-screen-page [data-screen-library] { max-height: 300px; }
   .main-screen-page .main-screen-card-heading button { width: 30px; height: 30px; }
+}
+@media (max-width: 880px) {
+  /* Keep 30% of the height increase between 16:9 and 4:3. */
+  .main-screen-page [data-pinned] .main-screen-preview { aspect-ratio: 160/99; }
 }
 @media (prefers-reduced-motion: reduce) { .main-screen-page *, [data-main-screen-sheet] * { animation: none !important; transition: none !important; } }
 
