@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('player', {
   submit: (payload) => ipcRenderer.invoke('overlay:submit', payload),
   cancel: () => ipcRenderer.send('overlay:cancel'),
   reset: () => ipcRenderer.send('player:reset'),
+  openSettings: () => ipcRenderer.send('player:open-settings'),
   quit: () => ipcRenderer.send('player:quit'),
   actions: () => ipcRenderer.send('player:actions'),
   dismissActions: () => ipcRenderer.send('player:dismiss-actions'),
