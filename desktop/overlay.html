@@ -82,6 +82,7 @@
       <button type="button" class="close-button" id="actionReset"><span class="action-icon" aria-hidden="true">↻</span>Reset screen</button>
       <button type="button" class="close-button" id="actionClose"><span class="action-icon" aria-hidden="true">✕</span>Close player</button>
       <button type="button" class="close-button" id="actionFullscreen"><span class="action-icon" aria-hidden="true">⛶</span>Full screen</button>
+      <button type="button" class="close-button" id="actionSettings"><span class="action-icon" aria-hidden="true">⚙</span>Open Settings</button>
     </section>
     <form class="modal" id="form" autocomplete="off">
       <h1 id="modalTitle">Enter Screen ID</h1>
@@ -129,6 +130,7 @@
     document.getElementById('actionReset').addEventListener('click', () => window.player.reset())
     document.getElementById('actionClose').addEventListener('click', () => window.player.quit())
     document.getElementById('actionFullscreen').addEventListener('click', () => window.player.fullscreen())
+    document.getElementById('actionSettings').addEventListener('click', () => window.player.openSettings())
     document.querySelector('.backdrop').addEventListener('click', (event) => {
       if (event.target === event.currentTarget && !actions.hidden) window.player.dismissActions()
     })
@@ -141,16 +143,19 @@
       actions.hidden = true
       form.hidden = false
       canCancel = state.canCancel
-      modalTitle.textContent = canCancel ? 'Reset screen' : 'Enter Screen ID'
-      modalHint.textContent = canCancel ? 'Change the screen assignment or close the player.' : 'The content assigned to this screen will play full screen.'
+      modalTitle.textContent = state.showSettings ? 'Server settings' : canCancel ? 'Reset screen' : 'Enter Screen ID'
+      modalHint.textContent = state.showSettings
+        ? 'Change the CMS server address and screen assignment.'
+        : canCancel ? 'Change the screen assignment or close the player.' : 'The content assigned to this screen will play full screen.'
       escHint.hidden = !canCancel
       screenInput.value = state.screenId || ''
       serverInput.value = state.serverUrl || ''
-      showServerField(!state.serverUrl)
+      showServerField(state.showSettings || !state.serverUrl)
       errorBox.textContent = ''
       submitButton.disabled = false
-      screenInput.focus()
-      screenInput.select()
+      const input = state.showSettings ? serverInput : screenInput
+      input.focus()
+      input.select()
     })
 
     document.getElementById('toggleServer').addEventListener('click', () => {
