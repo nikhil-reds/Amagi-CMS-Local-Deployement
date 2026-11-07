@@ -148,9 +148,9 @@ function openSavedScreen() {
 
 // ── Overlay (Screen ID modal) ─────────────────────────────────────────────────
 
-function showOverlay() {
+function showOverlay(showSettings = false) {
   if (!overlayView) return
-  const state = { ...loadConfig(), canCancel: Boolean(current) }
+  const state = { ...loadConfig(), canCancel: Boolean(current), showSettings }
   overlayView.setVisible(true)
   overlayView.webContents.focus()
   if (overlayReady) overlayView.webContents.send('overlay:show', state)
@@ -278,6 +278,7 @@ ipcMain.on('overlay:cancel', () => {
   if (current) hideOverlay()
 })
 ipcMain.on('player:reset', () => showOverlay())
+ipcMain.on('player:open-settings', () => showOverlay(true))
 ipcMain.on('player:quit', () => app.quit())
 ipcMain.on('player:actions', showPlayerActions)
 ipcMain.on('player:dismiss-actions', () => hideOverlay())
