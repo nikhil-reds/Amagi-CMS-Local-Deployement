@@ -73,6 +73,16 @@ html {
 body {
   background: #ffffff;
   overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* When inside the dark admin shell, the body/html should be black so
+   over-scroll rubber-banding never reveals a white gap. */
+html:has(.dark) {
+  background: #000;
+}
+html:has(.dark) body {
+  background: #000;
 }
 
 /* Keeps content clear of notches / home indicators. */
