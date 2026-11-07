@@ -11,7 +11,7 @@ export default function MainScreen() {
       </header>
       <div className="main-screen-workspace">
         <FilePanel />
-        <ScreenPanel />
+        <ScreenPanel pinnable />
       </div>
     </div>
   )
