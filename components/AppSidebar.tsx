@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -117,6 +118,10 @@ type AppSidebarProps = {
 
 export default function AppSidebar({ onNavigate, compact = false }: AppSidebarProps) {
   const pathname = usePathname()
+  // Suppress active-link mismatch: pathname isn't available during SSR,
+  // so defer active state to after first client render.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   return (
     <aside className={cn("console-sidebar", compact && "console-sidebar-compact")}>
@@ -129,7 +134,8 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
 
       <nav className="console-sidebar-nav" aria-label="Main navigation">
         {navigationItems.map((item) => {
-          const isActive = item.matcher(pathname)
+          // Only compute active state after mount to prevent SSR/client mismatch.
+          const isActive = mounted && item.matcher(pathname)
 
           return (
             <Link
@@ -150,7 +156,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
 
       <div className="console-sidebar-bottom">
         <a
-          href="/XOS.exe?v=1.0.1"
+          href="/XOS.exe?v=1.0.3"
           download="XOS.exe"
           title={compact ? "Download XOS (Windows)" : undefined}
           aria-label="Download XOS"
