@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Maximize2, Monitor } from 'lucide-react'
+import { Maximize2 } from 'lucide-react'
 import CloseButton from '../../[docId]/CloseButton'
 import ControlledMedia, { type ControlledAsset } from '@/components/ControlledMedia'
 import { connectScreen } from '@/lib/screen-realtime'
@@ -30,18 +30,13 @@ export default function ScreenPlayer({ screenId, screenName, kiosk = false }: Sc
 
   if (assets.length === 0) {
     return (
-      <div className="h-dvh flex flex-col items-center justify-center bg-zinc-950 text-white select-none">
-        <div className="max-w-md text-center p-8 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center border border-zinc-700">
-            <Monitor className="size-8 text-zinc-500" />
-          </div>
-          <h2 className="text-lg font-bold text-white/90">{screenName}</h2>
-          <p className="text-sm text-zinc-500">
-            {connecting ? 'Connecting to live screen updates…' : connectionError || 'Assign media from Main Screen to start playback.'}
-          </p>
+      <div className="relative h-dvh bg-black text-white select-none">
+        <img src="/amagi-idle.jpg" alt="Amagi — no media assigned" className="h-full w-full object-contain" />
+        {(connecting || connectionError) && <div className="absolute inset-x-4 bottom-4 flex flex-wrap items-center justify-center gap-3 rounded-xl bg-black/70 p-3 text-center text-sm" role="status">
+          <p>{connecting ? 'Connecting to live screen updates…' : connectionError}</p>
           {connectionError && <button className="rounded-full bg-white px-5 py-2 text-sm text-black" onClick={() => { setConnecting(true); setConnectionError(''); setAttempt(value => value + 1) }}>Reconnect</button>}
-          {!kiosk && <CloseButton />}
-        </div>
+        </div>}
+        {!kiosk && <CloseButton />}
       </div>
     )
   }
