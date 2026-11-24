@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Clock, Copy, ExternalLink, Info, Monitor, PlusCircle, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import '../main-screen/main-screen.css'
 import './screens.css'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   Sheet,
@@ -32,8 +30,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { formatDate } from '@/components/main-screen/shared'
-import FilePanel from '@/components/main-screen/FilePanel'
-import ScreenPanel from '@/components/main-screen/ScreenPanel'
 
 type AssignedAsset = {
   id: string
@@ -60,11 +56,9 @@ export default function ScreensDashboard() {
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState<'NEWEST' | 'OLDEST' | 'NAME'>('NEWEST')
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [sortBy, setSortBy] = useState<'NEWEST' | 'OLDEST' | 'NAME'>('OLDEST')
   const [selectedDetailScreen, setSelectedDetailScreen] = useState<Screen | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false)
 
   const loadScreens = useCallback(async () => {
     try {
@@ -127,7 +121,6 @@ export default function ScreensDashboard() {
       }
 
       setScreens((prev) => prev.filter((screen) => screen.id !== id))
-      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id))
       const result = await res.json()
       if (result.realtime?.delivered === false) toast.error('Screen deleted, but live delivery failed. Reconnect the player.')
       else toast.success('Screen deleted successfully')
@@ -138,66 +131,20 @@ export default function ScreensDashboard() {
     }
   }
 
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return
-    try {
-      let delivered = true
-      for (const id of selectedIds) {
-        const response = await fetch(`/api/screens/${id}`, { method: 'DELETE' })
-        const result = await response.json()
-        if (!response.ok) throw new Error(result.error || 'Failed to delete screen')
-        if (result.realtime?.delivered === false) delivered = false
-      }
-      setScreens((prev) => prev.filter((screen) => !selectedIds.includes(screen.id)))
-      setSelectedIds([])
-      if (!delivered) toast.error('Screens deleted, but live delivery failed. Reconnect affected players.')
-      else toast.success('Selected screens deleted')
-    } catch {
-      toast.error('Bulk deletion encountered errors')
-    } finally {
-      setIsBulkDeleteOpen(false)
-    }
-  }
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === filteredScreens.length) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(filteredScreens.map((screen) => screen.id))
-    }
-  }
-
-  const toggleSelectRow = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
-    )
-  }
-
-  const handleCopyUrl = async (id: string) => {
+  const handleCopyScreenId = async (id: string) => {
     try {
       const screen = screens.find((item) => item.id === id)
-      await navigator.clipboard.writeText(screen?.code || id)
+      if (!screen?.code) throw new Error('Screen ID not found')
+      await navigator.clipboard.writeText(screen.code)
       toast.success('Screen ID copied to clipboard')
     } catch {
-      toast.error('Unable to copy screen URL')
+      toast.error('Unable to copy Screen ID')
     }
   }
 
   // Screens presentation; existing data and event handlers are preserved.
   return (
     <div className="screens-page" data-screens-ui>
-      <section className="screens-tablet-workspace main-screen-page" aria-label="Tablet media assignment workspace">
-        <header className="main-screen-heading">
-          <p className="screens-tablet-breadcrumb">Home <span aria-hidden="true">›</span> Media Workspace</p>
-          <h1>Main Screen</h1>
-          <p>Build what each screen plays. Drag media from the library or use the assign button.</p>
-        </header>
-        <div className="main-screen-workspace">
-          <FilePanel />
-          <ScreenPanel />
-        </div>
-      </section>
-
       <header className="screens-header screens-management-only">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Screens</h1>
@@ -260,33 +207,6 @@ export default function ScreensDashboard() {
         </div>
       </section>
 
-      {selectedIds.length > 0 && (
-        <div className="screens-bulk screens-management-only bg-black text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl flex items-center justify-between shadow-lg shrink-0">
-          <span className="text-xs font-semibold" role="status" aria-live="polite">
-            {selectedIds.length} screen{selectedIds.length !== 1 ? 's' : ''} selected
-          </span>
-          <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
-            <DialogTrigger asChild>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-xs font-semibold rounded-xl transition-all cursor-pointer">
-                <Trash2 className="w-3.5 h-3.5" /> Delete Selected
-              </button>
-            </DialogTrigger>
-            <DialogContent data-screens-dialog className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
-              <DialogHeader>
-                <DialogTitle>Confirm Bulk Deletion</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete these {selectedIds.length} selected screens?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="screens-dialog-footer mt-4">
-                <Button variant="outline" onClick={() => setIsBulkDeleteOpen(false)} className="text-xs">Cancel</Button>
-                <Button onClick={handleBulkDelete} className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2">Delete</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-
       <section aria-label="Registered screens" className="screens-list screens-management-only flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
         {loading ? (
           <div className="p-6 space-y-4">
@@ -309,111 +229,29 @@ export default function ScreensDashboard() {
           </div>
         ) : (
           <>
-          {/* Phone layout: cards instead of a table. */}
-          <ul className="screens-cards divide-y divide-zinc-100 dark:divide-zinc-800/60">
-            {filteredScreens.map((screen) => {
-              const isSelected = selectedIds.includes(screen.id)
-              const assignedAsset = screen.assets?.[0]?.document
-              return (
-                <li key={screen.id} className={`screens-card ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelectRow(screen.id)}
-                    aria-label={`Select ${screen.name}`}
-                    className="screens-card-select size-4 shrink-0 accent-black cursor-pointer"
-                  />
-                  <button type="button" onClick={() => setSelectedDetailScreen(screen)} className="screens-card-body min-w-0 space-y-1 text-left">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                      <Monitor className="size-4 shrink-0 text-zinc-500" />
-                      <span className="truncate">{screen.name}</span>
-                    </span>
-                    <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">
-                      {assignedAsset ? assignedAsset.name : 'No asset assigned'}
-                    </span>
-                    <span className="block text-[11px] text-zinc-400 dark:text-zinc-500">{formatDate(screen.createdAt)}</span>
-                  </button>
-                  <div className="screens-card-actions">
-                    <button
-                      onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
-                      className="flex size-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      aria-label={`Open ${screen.name}`}
-                    >
-                      <ExternalLink className="size-4" />
-                    </button>
-                    <button
-                      onClick={() => handleCopyUrl(screen.id)}
-                      className="flex size-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      aria-label={`Copy URL for ${screen.name}`}
-                      title="Copy screen URL"
-                    >
-                      <Copy className="size-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirmId(screen.id)}
-                      className="flex size-10 items-center justify-center rounded-lg text-zinc-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
-                      aria-label={`Delete ${screen.name}`}
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-          <div className="screens-table flex-1 overflow-y-auto">
+          <div className="screens-table flex-1 overflow-auto">
           <Table>
             <TableHeader className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
               <TableRow>
-                <TableHead className="w-12 text-center">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all screens"
-                    checked={selectedIds.length === filteredScreens.length && filteredScreens.length > 0}
-                    onChange={toggleSelectAll}
-                    className="w-3.5 h-3.5 accent-black rounded cursor-pointer mt-1"
-                  />
-                </TableHead>
+                <TableHead className="p-4 text-center text-xs font-bold text-zinc-500 dark:text-zinc-400">Screen ID</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Screen Name</TableHead>
-                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">What it plays</TableHead>
                 <TableHead className="screens-created-column text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Created Date</TableHead>
                 <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredScreens.map((screen) => {
-                const isSelected = selectedIds.includes(screen.id)
-                const assignedAsset = screen.assets?.[0]?.document
+
                 return (
-                  <TableRow key={screen.id} className={`border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors ${isSelected ? 'bg-zinc-50/80 dark:bg-zinc-800/50' : ''}`}>
-                    <TableCell className="text-center">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${screen.name}`}
-                        checked={isSelected}
-                        onChange={() => toggleSelectRow(screen.id)}
-                        className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
-                      />
+                  <TableRow key={screen.id} className={`border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors`}>
+                    <TableCell className="p-4 text-center text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                      {screen.code}
                     </TableCell>
                     <TableCell className="p-4 font-semibold text-zinc-800 dark:text-zinc-100 text-xs">
                       <div className="screens-name">
                         <span className="screens-monitor"><Monitor className="w-5 h-5" /></span>
-                        <span><b>{screen.name}</b><small>{screen.code}</small></span>
+                        <span><b>{screen.name}</b></span>
                       </div>
-                    </TableCell>
-                    <TableCell className="p-4 text-xs">
-                      {assignedAsset ? (
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <span className="max-w-[180px] lg:max-w-[260px] 3xl:max-w-md truncate font-semibold text-zinc-800 dark:text-zinc-100" title={assignedAsset.name}>
-                            {assignedAsset.name}
-                          </span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                            {assignedAsset.sourceType === 'WEBSITE' || assignedAsset.websiteUrl ? 'Website' : assignedAsset.mimeType}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Nothing assigned yet</span>
-                      )}
                     </TableCell>
                     <TableCell className="screens-created-column p-4 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(screen.createdAt)}</TableCell>
                     <TableCell className="p-4 text-right">
@@ -435,10 +273,10 @@ export default function ScreensDashboard() {
                           <ExternalLink className="w-4 h-4" />
                         </button>
                         <button
-                           onClick={() => handleCopyUrl(screen.id)}
+                           onClick={() => handleCopyScreenId(screen.id)}
                           className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-                           aria-label={`Copy URL for ${screen.name}`}
-                           title="Copy screen URL"
+                           aria-label={`Copy Screen ID for ${screen.name}`}
+                           title="Copy Screen ID"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
