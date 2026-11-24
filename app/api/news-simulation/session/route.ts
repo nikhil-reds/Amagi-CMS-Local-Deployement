@@ -12,7 +12,7 @@ export async function GET() {
       prisma.newsSimulationState.findUnique({ where: { id: 'global' } }),
       prisma.screen.findMany({ orderBy: { createdAt: 'asc' }, select: { id: true, code: true, name: true } }),
     ])
-    return NextResponse.json({ active: state?.active ?? false, targetScreenIds: state?.targetScreenIds ?? [], screens }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({ active: state?.active ?? false, startedAt: state?.active ? state.updatedAt : null, targetScreenIds: state?.targetScreenIds ?? [], screens }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[simulation state]', error)
     return NextResponse.json({ error: 'Unable to load simulation state' }, { status: 500 })
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     })
     const destinations = await prisma.screen.findMany({ where: { id: { in: result.targets } }, select: { id: true } })
     const deliveries = await Promise.all(destinations.map(screen => publishScreenChanged(screen.id)))
-    return NextResponse.json({ active: result.state.active, targetScreenIds: result.state.targetScreenIds, warning: deliveries.some(item => !item.delivered) ? 'Saved, but some players did not receive the live update. Reconnect those players.' : null })
+    return NextResponse.json({ active: result.state.active, startedAt: result.state.active ? result.state.updatedAt : null, targetScreenIds: result.state.targetScreenIds, warning: deliveries.some(item => !item.delivered) ? 'Saved, but some players did not receive the live update. Reconnect those players.' : null })
   } catch (error) {
     console.error('[simulation lifecycle]', error)
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to change simulation' }, { status: 400 })
