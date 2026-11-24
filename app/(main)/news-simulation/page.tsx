@@ -9,6 +9,12 @@ type SimulationScreen = { screenNumber: number; name: string; port: number; url:
 type Destination = { id: string; code: string; name: string }
 const ports = Array.from({ length: 12 }, (_, index) => 3000 + index)
 
+function defaultTargets(screens: Destination[]) {
+  return Array.from({ length: 4 }, (_, index) =>
+    screens.find(screen => screen.name.trim().toLowerCase() === defaultScreenName(index + 1).toLowerCase())?.id || ''
+  )
+}
+
 export default function NewsSimulationPage() {
   const [screens, setScreens] = useState<SimulationScreen[]>([])
   const [address, setAddress] = useState('localhost')
@@ -39,7 +45,7 @@ export default function NewsSimulationPage() {
         if (!stateResponse.ok) throw new Error(state.error || 'Failed to load simulation state')
         setActive(state.active)
         setDestinations(state.screens)
-        setTargets(state.targetScreenIds.length === 4 ? state.targetScreenIds : Array.from({ length: 4 }, (_, index) => state.screens.find((screen: Destination) => screen.name.toLowerCase() === defaultScreenName(index + 1).toLowerCase())?.id || ''))
+        setTargets(state.active && state.targetScreenIds.length === 4 ? state.targetScreenIds : defaultTargets(state.screens))
       } catch (error) {
         if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Failed to load screens')
       } finally {
@@ -62,7 +68,7 @@ export default function NewsSimulationPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Unable to change simulation')
       setActive(data.active)
-      setTargets(data.targetScreenIds)
+      setTargets(data.active ? data.targetScreenIds : defaultTargets(destinations))
       setMessage(data.active ? 'Simulation started on the four selected screens.' : 'Simulation ended. Original content restored.')
       if (data.warning) setError(data.warning)
     } catch (error) {
