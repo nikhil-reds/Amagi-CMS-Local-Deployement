@@ -1,7 +1,7 @@
 {
   "name": "amagi-screen-player",
   "productName": "Amagi Screen Player",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Full-screen kiosk player that shows the content assigned to an Amagi Multimedia screen.",
   "main": "main.js",
   "private": true,
@@ -36,6 +36,7 @@
       "player.html",
       "build-config.json",
       "icon.png",
+      "amagi-idle.jpg",
       "package.json",
       "media-runtime.js",
       "pdfjs/**/*",
@@ -49,6 +50,7 @@
       "artifactName": "AmagiScreenPlayer-Setup-${version}.${ext}"
     },
     "nsis": {
+      "differentialPackage": false,
       "oneClick": true,
       "perMachine": false,
       "createDesktopShortcut": true,
