@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 COPY scripts/prepare-media.cjs ./scripts/prepare-media.cjs
-RUN npm ci --no-audit --no-fund --prefer-offline
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund --prefer-offline --fetch-retries=5 --maxsockets=5
 
 # ── Stage 2: build ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
