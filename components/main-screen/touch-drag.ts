@@ -43,17 +43,27 @@ export function startTouchDrag(event: ReactPointerEvent<HTMLElement>, payload: u
   let ghost: HTMLDivElement | null = null
   let hover: string | null = null
   let frame = 0
+  const previousUserSelect = document.documentElement.style.userSelect
 
   const setHover = (screenId: string | null) => {
     if (screenId === hover) return
     hover = screenId
+    if (ghost) {
+      ghost.dataset.overScreen = String(Boolean(screenId))
+      const hint = ghost.querySelector('small')
+      if (hint) hint.textContent = screenId ? 'Release to add to screen' : 'Drag onto a screen'
+    }
     window.dispatchEvent(new CustomEvent<TouchHoverDetail>(TOUCH_HOVER_EVENT, { detail: { screenId } }))
   }
 
   const tick = () => {
     if (!active) return
     if (!source.isConnected) { cleanup(); return }
-    if (ghost) ghost.style.transform = `translate(${x}px, ${y}px) translate(-50%, -130%)`
+    if (ghost) {
+      const left = Math.max(12, Math.min(x - 130, innerWidth - Math.min(260, innerWidth - 24) - 12))
+      const top = Math.max(12, Math.min(y - 100, innerHeight - 90))
+      ghost.style.transform = `translate(${left}px, ${top}px)`
+    }
 
     const hit = document.elementFromPoint(x, y)
     setHover(hit?.closest<HTMLElement>('[data-drop-screen]')?.dataset.dropScreen ?? null)
@@ -72,12 +82,15 @@ export function startTouchDrag(event: ReactPointerEvent<HTMLElement>, payload: u
     }
 
     ghost = document.createElement('div')
-    ghost.textContent = label
-    ghost.style.cssText =
-      'position:fixed;top:0;left:0;z-index:100;pointer-events:none;max-width:220px;overflow:hidden;' +
-      'text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;border-radius:12px;background:#000;color:#fff;' +
-      'font:600 12px system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:.95;'
+    ghost.className = 'media-drag-preview'
+    const title = document.createElement('strong')
+    title.textContent = label
+    const hint = document.createElement('small')
+    hint.textContent = 'Drag onto a screen'
+    ghost.append(title, hint)
     document.body.appendChild(ghost)
+    source.closest('.touch-draggable, .relative')?.classList.add('media-drag-source')
+    document.documentElement.dataset.mediaDragging = 'true'
     document.documentElement.style.userSelect = 'none'
     frame = requestAnimationFrame(tick)
   }
@@ -114,7 +127,9 @@ export function startTouchDrag(event: ReactPointerEvent<HTMLElement>, payload: u
     ghost?.remove()
     ghost = null
     active = false
-    document.documentElement.style.userSelect = ''
+    document.documentElement.style.userSelect = previousUserSelect
+    source.closest('.touch-draggable, .relative')?.classList.remove('media-drag-source')
+    delete document.documentElement.dataset.mediaDragging
     setHover(null)
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
