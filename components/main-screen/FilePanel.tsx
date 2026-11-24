@@ -124,6 +124,12 @@ export default function FilePanel() {
                   onDragStart={(event) => {
                     event.dataTransfer.setData('application/json', JSON.stringify(doc))
                     event.dataTransfer.effectAllowed = 'copy'
+                    event.currentTarget.classList.add('media-drag-source')
+                    document.documentElement.dataset.mediaDragging = 'true'
+                  }}
+                  onDragEnd={(event) => {
+                    event.currentTarget.classList.remove('media-drag-source')
+                    delete document.documentElement.dataset.mediaDragging
                   }}
                   className="touch-draggable group relative block rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 transition hover:border-gray-200 dark:hover:border-zinc-700 hover:shadow-sm active:cursor-grabbing"
                 >
