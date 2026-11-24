@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { defaultScreenName } from '@/lib/screen-name'
 import { ChevronDown } from "lucide-react"
+import { Select } from 'radix-ui'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import "./news-simulation.css"
 
 type SimulationScreen = { screenNumber: number; name: string; port: number; url: string }
@@ -21,6 +23,7 @@ export default function NewsSimulationPage() {
   const [port, setPort] = useState(3000)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [active, setActive] = useState(false)
@@ -92,6 +95,7 @@ export default function NewsSimulationPage() {
       if (!response.ok) throw new Error(data.error || 'Failed to save screens')
       setScreens(data)
       setMessage(`All ${data.length} screens saved.`)
+      setSettingsOpen(false)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to save screens')
     } finally {
@@ -103,6 +107,16 @@ export default function NewsSimulationPage() {
     <div className="news-simulation-page">
       <header className="news-simulation-heading">
         <h1>News Simulation</h1>
+        <div className="news-simulation-header-actions">
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogTrigger asChild>
+            <button className="news-simulation-settings-button" type="button">Universal IP &amp; Port</button>
+          </DialogTrigger>
+          <DialogContent className="news-simulation-settings-dialog">
+            <DialogHeader>
+              <DialogTitle>Universal IP &amp; Port</DialogTitle>
+              <DialogDescription>Set the IP address and port for all 12 simulation screens.</DialogDescription>
+            </DialogHeader>
         <div className="news-simulation-source">
           <div className="news-simulation-fields">
             <label>
@@ -111,16 +125,57 @@ export default function NewsSimulationPage() {
             </label>
             <label>
               <span>Universal port</span>
-              <div className="news-simulation-select">
-                <select id="simulation-port" value={port} disabled={loading || saving || changing || active} onChange={(event) => { setPort(Number(event.target.value)); setMessage("") }} aria-label="Universal port for all simulation screens">
-                  {ports.map((port) => <option key={port} value={port}>{port}</option>)}
-                </select>
-                <ChevronDown size={14} aria-hidden="true" />
-              </div>
+              <Select.Root value={String(port)} disabled={loading || saving || changing || active} onValueChange={(value) => { setPort(Number(value)); setMessage("") }}>
+                <Select.Trigger id="simulation-port" className="simulation-port-trigger" aria-label="Universal port for all simulation screens">
+                  <Select.Value />
+                  <Select.Icon><ChevronDown size={14} /></Select.Icon>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Content className="simulation-port-menu" position="popper" sideOffset={6} collisionPadding={12}>
+                    <Select.Viewport>
+                      {ports.map(value => <Select.Item className="simulation-port-option" key={value} value={String(value)}><Select.ItemText>{value}</Select.ItemText></Select.Item>)}
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select.Portal>
+              </Select.Root>
             </label>
           </div>
           <p className="news-simulation-origin">Static base URL: <strong>http://{address.trim() || '<IP address>'}:{port}</strong></p>
+          {active && <p className="news-simulation-origin">End the simulation before changing these settings.</p>}
+          {error && <p className="news-simulation-error" role="alert">{error}</p>}
           <button className="news-simulation-save" type="button" onClick={savePort} disabled={loading || saving || changing || active}>{saving ? 'Saving…' : 'Save all screens'}</button>
+        </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="news-simulation-settings-button" type="button">URL</button>
+          </DialogTrigger>
+          <DialogContent className="news-simulation-settings-dialog news-simulation-urls-dialog">
+            <DialogHeader>
+              <DialogTitle>Simulation URLs</DialogTitle>
+              <DialogDescription>All saved simulation screen URLs and ports.</DialogDescription>
+            </DialogHeader>
+      <div className="news-simulation-table-wrap">
+        <table className="news-simulation-table" aria-label="News simulation screen ports">
+          <thead>
+            <tr><th scope="col">News Simulation Screen</th><th scope="col">Port</th><th scope="col">URL</th></tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={3}>Loading screens…</td></tr>}
+            {!loading && !screens.length && <tr><td colSpan={3}>No saved screens. Select a port and save all screens.</td></tr>}
+            {screens.map((screen) => (
+              <tr key={screen.screenNumber}>
+                <th scope="row">{screen.name}</th>
+                <td>{screen.port}</td>
+                <td className="news-simulation-url">{screen.url}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+          </DialogContent>
+        </Dialog>
         </div>
       </header>
       {error && <p className="news-simulation-error" role="alert">{error}</p>}
@@ -144,24 +199,7 @@ export default function NewsSimulationPage() {
         </div>
       </section>
 
-      <div className="news-simulation-table-wrap">
-        <table className="news-simulation-table" aria-label="News simulation screen ports">
-          <thead>
-            <tr><th scope="col">News Simulation Screen</th><th scope="col">Port</th><th scope="col">URL</th></tr>
-          </thead>
-          <tbody>
-            {loading && <tr><td colSpan={3}>Loading screens…</td></tr>}
-            {!loading && !screens.length && <tr><td colSpan={3}>No saved screens. Select a port and save all screens.</td></tr>}
-            {screens.map((screen) => (
-              <tr key={screen.screenNumber}>
-                <th scope="row">{screen.name}</th>
-                <td>{screen.port}</td>
-                <td className="news-simulation-url">{screen.url}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+
     </div>
   )
 }
