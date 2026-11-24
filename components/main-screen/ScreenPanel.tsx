@@ -440,6 +440,7 @@ export default function ScreenPanel({ pinnable = false }: { pinnable?: boolean }
                   key={screen.id}
                   ref={isPinned ? pinnedCard : undefined}
                   data-drop-screen={screen.id}
+                  data-drop-active={isActiveDrop || undefined}
                   data-pinned={isPinned || undefined}
                   onDragOver={(event) => {
                     event.preventDefault()
@@ -517,8 +518,10 @@ export default function ScreenPanel({ pinnable = false }: { pinnable?: boolean }
                   </div>
 
                   {isActiveDrop ? (
-                    <div className="absolute inset-3 flex items-center justify-center rounded-xl border-2 border-dashed border-black dark:border-white bg-white/80 dark:bg-zinc-900/80 text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                      {isFull ? `Maximum of ${MAX_ASSETS_PER_SCREEN} items reached` : 'Drop to add'}
+                    <div className="main-screen-drop-feedback" role="status">
+                      <Upload size={36} aria-hidden="true" />
+                      <strong>{isFull ? 'Screen is full' : `Drop here to add to ${screen.name}`}</strong>
+                      <span>{isFull ? `Maximum of ${MAX_ASSETS_PER_SCREEN} items reached` : 'Release the file to assign it to this screen'}</span>
                     </div>
                   ) : null}
 
