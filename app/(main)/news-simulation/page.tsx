@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { defaultScreenName } from '@/lib/screen-name'
-import { ChevronDown } from "lucide-react"
-import { Select } from 'radix-ui'
+import { Check, ChevronDown, Clock, Info, Play, Search } from "lucide-react"
+import { Popover, Select } from 'radix-ui'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import "./news-simulation.css"
 
@@ -17,6 +17,58 @@ function defaultTargets(screens: Destination[]) {
   )
 }
 
+function SimulationTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    const update = () => setElapsed(Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000)))
+    const initial = window.setTimeout(update, 0)
+    const interval = window.setInterval(update, 1000)
+    return () => { window.clearTimeout(initial); window.clearInterval(interval) }
+  }, [startedAt])
+  const time = [Math.floor(elapsed / 3600), Math.floor(elapsed / 60) % 60, elapsed % 60].map(value => String(value).padStart(2, '0')).join(':')
+  return <span className="simulation-timer" role="timer" aria-label={`Simulation elapsed time ${time}`}><Clock size={18} />{time}</span>
+}
+
+function ScreenDestination({ index, destinations, targets, disabled, onSelect }: {
+  index: number; destinations: Destination[]; targets: string[]; disabled: boolean; onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const selected = destinations.find(screen => screen.id === targets[index])
+  return <article className={`simulation-map-card ${open ? 'is-selecting' : ''}`}>
+    <div className="simulation-monitor" aria-label={`Feeds ${index * 3 + 1} to ${index * 3 + 3}`}>
+      <div className="simulation-monitor-display">
+        {[1, 2, 3].map(offset => <div className="simulation-feed" key={offset}><b>{index * 3 + offset}</b><span>Feed {index * 3 + offset}</span></div>)}
+      </div>
+      <div className="simulation-monitor-neck" /><div className="simulation-monitor-foot" />
+    </div>
+    <div className="simulation-map-details">
+      <h2>{selected?.name || defaultScreenName(index + 1)}{selected && <span>({selected.code})</span>}</h2>
+      <p>Feeds {index * 3 + 1}–{index * 3 + 3}</p>
+      <Popover.Root open={open} onOpenChange={value => { setOpen(value); setQuery('') }}>
+        <Popover.Trigger disabled={disabled} className="simulation-destination-trigger" aria-label={`Destination for ${defaultScreenName(index + 1)}`}>
+          <span>{selected ? `${selected.name} (${selected.code})` : 'Choose screen'}</span><ChevronDown size={18} />
+        </Popover.Trigger>
+        <Popover.Portal><Popover.Content className="simulation-destination-menu" sideOffset={10} collisionPadding={12} align="end">
+          <div className="simulation-destination-search"><Search size={18} /><input aria-label="Find a screen" placeholder="Find a screen" value={query} onChange={event => setQuery(event.target.value)} /></div>
+          <div className="simulation-destination-options">
+            {destinations.filter(screen => `${screen.name} ${screen.code}`.toLowerCase().includes(query.toLowerCase())).map(screen => {
+              const assignedIndex = targets.indexOf(screen.id)
+              const isSelected = targets[index] === screen.id
+              const assignedElsewhere = assignedIndex !== -1 && assignedIndex !== index
+              return <button key={screen.id} type="button" disabled={assignedElsewhere} className="simulation-destination-option" aria-pressed={isSelected} onClick={() => { onSelect(screen.id); setOpen(false) }}>
+                <span>{screen.name} ({screen.code})<small>{assignedIndex === -1 ? 'Available' : `Feeds ${assignedIndex * 3 + 1}–${assignedIndex * 3 + 3}${assignedElsewhere ? ' · Assigned' : ''}`}</small></span>
+                {isSelected && <Check size={20} />}
+              </button>
+            })}
+            {!destinations.some(screen => `${screen.name} ${screen.code}`.toLowerCase().includes(query.toLowerCase())) && <p className="simulation-no-results">No matching screens</p>}
+          </div>
+        </Popover.Content></Popover.Portal>
+      </Popover.Root>
+    </div>
+  </article>
+}
+
 export default function NewsSimulationPage() {
   const [screens, setScreens] = useState<SimulationScreen[]>([])
   const [address, setAddress] = useState('localhost')
@@ -27,6 +79,7 @@ export default function NewsSimulationPage() {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [active, setActive] = useState(false)
+  const [startedAt, setStartedAt] = useState<string | null>(null)
   const [changing, setChanging] = useState(false)
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [targets, setTargets] = useState<string[]>(['', '', '', ''])
@@ -47,6 +100,7 @@ export default function NewsSimulationPage() {
         const state = await stateResponse.json()
         if (!stateResponse.ok) throw new Error(state.error || 'Failed to load simulation state')
         setActive(state.active)
+        setStartedAt(state.startedAt ?? null)
         setDestinations(state.screens)
         setTargets(state.active && state.targetScreenIds.length === 4 ? state.targetScreenIds : defaultTargets(state.screens))
       } catch (error) {
@@ -71,6 +125,7 @@ export default function NewsSimulationPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Unable to change simulation')
       setActive(data.active)
+      setStartedAt(data.startedAt ?? null)
       setTargets(data.active ? data.targetScreenIds : defaultTargets(destinations))
       setMessage(data.active ? 'Simulation started on the four selected screens.' : 'Simulation ended. Original content restored.')
       if (data.warning) setError(data.warning)
@@ -149,7 +204,7 @@ export default function NewsSimulationPage() {
         </Dialog>
         <Dialog>
           <DialogTrigger asChild>
-            <button className="news-simulation-settings-button" type="button">URL</button>
+            <button className="news-simulation-settings-button" type="button">URLs</button>
           </DialogTrigger>
           <DialogContent className="news-simulation-settings-dialog news-simulation-urls-dialog">
             <DialogHeader>
@@ -181,23 +236,19 @@ export default function NewsSimulationPage() {
       {error && <p className="news-simulation-error" role="alert">{error}</p>}
       {message && <p className="news-simulation-message" role="status">{message}</p>}
 
-      <section className="simulation-controls" aria-label="Simulation controls">
-        <div className="simulation-toolbar">
-          <span role="status">Simulation: {active ? 'Active' : 'Inactive'}</span>
-          <button type="button" onClick={() => changeSimulation('start')} disabled={loading || saving || changing || active || targets.some(id => !id) || new Set(targets).size !== 4}>Start New Simulation</button>
-          <button type="button" onClick={() => changeSimulation('end')} disabled={loading || saving || changing || !active}>End Simulation</button>
-        </div>
-        <p>Start opens the 12 saved simulation URLs on the four selected CMS screens, three URLs stacked vertically on each screen. End Simulation restores the original content.</p>
-        <div className="simulation-targets">
-          {[0, 1, 2, 3].map(index => <label key={index}>
-            {defaultScreenName(index + 1)} · feeds {index * 3 + 1}–{index * 3 + 3}
-            <select aria-label={`Destination for ${defaultScreenName(index + 1)}`} value={targets[index] || ''} disabled={loading || changing || active} onChange={event => setTargets(values => values.map((value, position) => position === index ? event.target.value : value))}>
-              <option value="">Choose screen</option>
-              {destinations.map(screen => <option key={screen.id} value={screen.id}>{screen.name} ({screen.code})</option>)}
-            </select>
-          </label>)}
+      <section className="simulation-status-bar" aria-label="Simulation controls">
+        <div className="simulation-status" role="status"><i className={active ? 'is-active' : ''} />{active ? 'Active' : 'Inactive'}</div>
+        <span className="simulation-feed-count">4 screens · 12 feeds</span>
+        {active && startedAt && <SimulationTimer key={startedAt} startedAt={startedAt} />}
+        <div className="simulation-status-actions">
+          <button className="simulation-start" type="button" onClick={() => changeSimulation('start')} disabled={loading || saving || changing || active || targets.some(id => !id) || new Set(targets).size !== 4}><Play size={19} fill="currentColor" />{changing && !active ? 'Starting…' : 'Start New Simulation'}</button>
+          <button className="simulation-end" type="button" onClick={() => changeSimulation('end')} disabled={loading || saving || changing || !active}>{changing && active ? 'Ending…' : 'End Simulation'}</button>
         </div>
       </section>
+      <section className="simulation-map-grid" aria-label="Simulation screen mapping" aria-busy={loading}>
+        {[0, 1, 2, 3].map(index => <ScreenDestination key={index} index={index} destinations={destinations} targets={targets} disabled={loading || changing || active} onSelect={id => setTargets(values => values.map((value, position) => position === index ? id : value))} />)}
+      </section>
+      <p className="simulation-restore-note"><Info size={22} />Ending the simulation restores original screen content.</p>
 
 
     </div>
