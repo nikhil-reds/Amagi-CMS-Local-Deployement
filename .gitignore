@@ -56,6 +56,7 @@ next-env.d.ts
 /public/pdfjs
 /desktop/pdfjs
 /desktop/centrifuge-client.cjs
+/desktop/amagi-idle.jpg
 
 # Font assets (binary, served via CDN or package manager)
 /public/AbroSans
