@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { FileText, Globe2, MonitorUp, Search } from 'lucide-react'
+import { FileText, GripVertical, Globe2, MonitorUp, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Document, FileIcon, formatBytes, formatDate, iconBg, StatusBadge } from './shared'
 import { DocumentListSkeleton } from './skeletons'
-import { ASSIGN_REQUEST_EVENT, startTouchDrag, useFinePointer } from './touch-drag'
+import { ASSIGN_REQUEST_EVENT, startTouchDrag } from './touch-drag'
 
 type DocumentItem = Document & {
   cloudinaryUrl?: string | null
@@ -19,7 +19,6 @@ export default function FilePanel() {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const finePointer = useFinePointer()
 
   useEffect(() => {
     function loadDocuments() {
@@ -113,18 +112,12 @@ export default function FilePanel() {
               // Image/video links show as media; other links show as websites.
               const isWebsite = (doc.sourceType === 'WEBSITE' || Boolean(doc.websiteUrl)) && !/^(image|video)\//.test(doc.mimeType)
               return (
+                <div key={doc.id} className="relative">
                 <a
-                  key={doc.id}
                   href={doc.s3Url || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  draggable={finePointer && Boolean(doc.s3Url)}
-                  onPointerDown={(event) => {
-                    if (doc.s3Url) startTouchDrag(event, doc, doc.name)
-                  }}
-                  onContextMenu={(event) => {
-                    if (!finePointer) event.preventDefault()
-                  }}
+                  draggable={Boolean(doc.s3Url)}
                   onClick={(event) => {
                     if (!doc.s3Url) event.preventDefault()
                   }}
@@ -181,12 +174,23 @@ export default function FilePanel() {
                     </button>
                   ) : null}
                 </a>
+                {doc.s3Url && (
+                  <span
+                    className="media-touch-grip"
+                    aria-hidden="true"
+                    onContextMenu={event => event.preventDefault()}
+                    onPointerDown={event => startTouchDrag(event, doc, doc.name)}
+                  >
+                    <GripVertical size={24} />
+                  </span>
+                )}
+                </div>
               )
             })}
           </div>
         )}
       </div>
-      <p className="main-screen-library-hint">Drag a file onto a screen, or use the assign button to choose a screen.</p>
+      <p className="main-screen-library-hint">On touchscreens, drag the grip onto a screen. You can also use the assign button.</p>
     </aside>
   )
 }

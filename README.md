@@ -287,7 +287,7 @@ An Electron kiosk app that plays a screen's assigned content full-screen on a Wi
 cd desktop
 npm install
 npm start          # run locally
-npm run dist       # builds the fast installed desktop/dist/AmagiScreenPlayer-Setup-1.0.1.exe
+npm run dist       # builds the fast installed desktop/dist/AmagiScreenPlayer-Setup-1.0.4.exe
 npm run dist:portable # optional self-extracting build; slower to open
 ```
 

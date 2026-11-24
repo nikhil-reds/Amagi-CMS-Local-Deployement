@@ -49,6 +49,8 @@ next-env.d.ts
 
 # local docker tar archives
 *.tar
+*.tar.gz
+*.zip
 
 # Generated media renderer dependencies
 /public/pdfjs

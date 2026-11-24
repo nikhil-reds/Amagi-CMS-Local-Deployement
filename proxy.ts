@@ -13,7 +13,7 @@ export function proxy(request: NextRequest) {
   // and read-only screen APIs used by the desktop player (GET /api/screens/**).
   const isReadOnly = request.method === 'GET' || request.method === 'HEAD'
   const isPublicApi =
-    pathname.startsWith('/api/auth') || (isReadOnly && pathname.startsWith('/api/screens'))
+    pathname.startsWith('/api/auth') || (isReadOnly && (pathname.startsWith('/api/screens') || /^\/api\/media\/[^/]+$/.test(pathname)))
   // Multipart uploads must bypass proxy body buffering; /api/upload performs its own auth check.
   if (pathname === '/api/upload') return NextResponse.next()
 

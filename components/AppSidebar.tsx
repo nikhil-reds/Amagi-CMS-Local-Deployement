@@ -156,7 +156,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
 
       <div className="console-sidebar-bottom">
         <a
-          href="/XOS.exe?v=1.0.3"
+          href="/XOS.exe?v=1.0.4"
           download="XOS.exe"
           title={compact ? "Download XOS (Windows)" : undefined}
           aria-label="Download XOS"

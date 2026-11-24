@@ -79,10 +79,9 @@
   <div class="backdrop">
     <section class="modal" id="playerActions" role="dialog" aria-modal="true" aria-labelledby="actionsTitle" hidden>
       <h1 id="actionsTitle">Player controls</h1>
-      <button type="button" class="close-button" id="actionReset"><span class="action-icon" aria-hidden="true">↻</span>Reset screen</button>
       <button type="button" class="close-button" id="actionClose"><span class="action-icon" aria-hidden="true">✕</span>Close player</button>
       <button type="button" class="close-button" id="actionFullscreen"><span class="action-icon" aria-hidden="true">⛶</span>Full screen</button>
-      <button type="button" class="close-button" id="actionSettings"><span class="action-icon" aria-hidden="true">⚙</span>Open Settings</button>
+      <button type="button" class="close-button" id="actionSettings"><span class="action-icon" aria-hidden="true">⚙</span>Server settings</button>
     </section>
     <form class="modal" id="form" autocomplete="off">
       <h1 id="modalTitle">Enter Screen ID</h1>
@@ -125,9 +124,8 @@
     window.player.onActions(() => {
       form.hidden = true
       actions.hidden = false
-      document.getElementById('actionReset').focus()
+      document.getElementById('actionClose').focus()
     })
-    document.getElementById('actionReset').addEventListener('click', () => window.player.reset())
     document.getElementById('actionClose').addEventListener('click', () => window.player.quit())
     document.getElementById('actionFullscreen').addEventListener('click', () => window.player.fullscreen())
     document.getElementById('actionSettings').addEventListener('click', () => window.player.openSettings())

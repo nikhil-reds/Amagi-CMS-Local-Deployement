@@ -78,3 +78,13 @@
   :is([data-documents-dialog],[data-users-dialog],[data-main-screen-sheet]) :is(input,select,textarea) { font-size: 16px; }
   .control-card button { min-width: 44px; }
 }
+
+.console-sidebar-desktop { display: none; }
+.console-navbar .console-menu-trigger,
+[data-navigation-drawer] [data-slot="sheet-close"] { width: 44px; height: 44px; }
+
+@media (min-width: 80rem) and (hover: hover) and (pointer: fine) {
+  .console-sidebar-desktop { display: block; }
+  .console-workspace { padding-left: 232px; }
+  .console-navbar .console-menu-trigger { display: none; }
+}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { defaultScreenName } from '@/lib/screen-name'
 import { ChevronDown } from "lucide-react"
 import "./news-simulation.css"
 
@@ -38,7 +39,7 @@ export default function NewsSimulationPage() {
         if (!stateResponse.ok) throw new Error(state.error || 'Failed to load simulation state')
         setActive(state.active)
         setDestinations(state.screens)
-        setTargets(state.targetScreenIds.length === 4 ? state.targetScreenIds : Array.from({ length: 4 }, (_, index) => state.screens.find((screen: Destination) => screen.name.toLowerCase() === `screen ${String(index + 1).padStart(2, '0')}`)?.id || ''))
+        setTargets(state.targetScreenIds.length === 4 ? state.targetScreenIds : Array.from({ length: 4 }, (_, index) => state.screens.find((screen: Destination) => screen.name.toLowerCase() === defaultScreenName(index + 1).toLowerCase())?.id || ''))
       } catch (error) {
         if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Failed to load screens')
       } finally {
@@ -128,8 +129,8 @@ export default function NewsSimulationPage() {
         <p>Start opens the 12 saved simulation URLs on the four selected CMS screens, three URLs stacked vertically on each screen. End Simulation restores the original content.</p>
         <div className="simulation-targets">
           {[0, 1, 2, 3].map(index => <label key={index}>
-            Screen {String(index + 1).padStart(2, '0')} · feeds {index * 3 + 1}–{index * 3 + 3}
-            <select aria-label={`Destination for Screen ${String(index + 1).padStart(2, '0')}`} value={targets[index] || ''} disabled={loading || changing || active} onChange={event => setTargets(values => values.map((value, position) => position === index ? event.target.value : value))}>
+            {defaultScreenName(index + 1)} · feeds {index * 3 + 1}–{index * 3 + 3}
+            <select aria-label={`Destination for ${defaultScreenName(index + 1)}`} value={targets[index] || ''} disabled={loading || changing || active} onChange={event => setTargets(values => values.map((value, position) => position === index ? event.target.value : value))}>
               <option value="">Choose screen</option>
               {destinations.map(screen => <option key={screen.id} value={screen.id}>{screen.name} ({screen.code})</option>)}
             </select>

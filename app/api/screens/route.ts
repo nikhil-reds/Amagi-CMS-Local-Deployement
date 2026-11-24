@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/auth'
 import { createScreenCode } from '@/lib/screen-code'
 
+import { defaultScreenName } from '@/lib/screen-name'
+
 export async function GET() {
   try {
     const screens = await prisma.screen.findMany({
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Count screens to generate a default name if not provided
     const count = await prisma.screen.count()
-    const screenName = name || `Screen ${String(count + 1).padStart(2, '0')}`
+    const screenName = name || defaultScreenName(count + 1)
 
     const screen = await prisma.screen.create({
       data: {
