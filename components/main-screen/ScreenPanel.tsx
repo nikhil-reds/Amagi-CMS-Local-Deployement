@@ -462,9 +462,9 @@ export default function ScreenPanel({ pinnable = false }: { pinnable?: boolean }
                     {primaryAsset ? (
                       <AssetPreview key={primaryAsset.id + primaryAsset.documentId} document={primaryAsset.document} />
                     ) : (
-                      <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-gray-400 dark:text-zinc-500">
-                        <Monitor className="size-12" />
-                        <p className="text-xs font-medium">Drag a document here, or tap + to add</p>
+                      <div className="relative h-full w-full">
+                        <img src="/amagi-idle.jpg" alt="Amagi — no media assigned" className="h-full w-full object-contain" />
+                        <p className="absolute inset-x-0 bottom-0 bg-black/65 p-2 text-center text-xs text-white">Drag a document here, or tap + to add</p>
                       </div>
                     )}
                   </div>
