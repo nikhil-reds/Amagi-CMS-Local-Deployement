@@ -167,6 +167,16 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
           </NavIcon>
           {!compact && <span><b>Download XOS</b><small>Player app for your screens</small></span>}
         </a>
+        <a
+          href="/XOS-Android.apk?v=1.0.1"
+          download="XOS-Android.apk"
+          title={compact ? "Download XOS (Android)" : undefined}
+          aria-label="Download XOS for Android"
+          className="console-sidebar-download"
+        >
+          <NavIcon><path d="M5 2h8v14H5zM8 13.5h2" /></NavIcon>
+          {!compact && <span><b>Download Android</b><small>XOS player APK</small></span>}
+        </a>
         <LogoutButton compact={compact} />
         {!compact && (
           <div className="console-sidebar-footer">
