@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File android/scripts/build.ps1 -Setup",
+    "android:build": "powershell -NoProfile -ExecutionPolicy Bypass -File android/scripts/build.ps1",
+    "test:android": "node android/scripts/prepare-assets.cjs && node --test android/scripts/parity.test.cjs",
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "deploy:local": "docker compose up -d --build --no-deps app",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
