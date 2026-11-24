@@ -156,7 +156,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
 
       <div className="console-sidebar-bottom">
         <a
-          href="/XOS.exe?v=1.0.4"
+          href="/XOS.exe?v=1.0.5"
           download="XOS.exe"
           title={compact ? "Download XOS (Windows)" : undefined}
           aria-label="Download XOS"
@@ -168,7 +168,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
           {!compact && <span><b>Download XOS</b><small>Player app for your screens</small></span>}
         </a>
         <a
-          href="/XOS-Android.apk?v=1.0.1"
+          href="/XOS-Android.apk?v=1.0.2"
           download="XOS-Android.apk"
           title={compact ? "Download XOS (Android)" : undefined}
           aria-label="Download XOS for Android"
