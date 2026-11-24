@@ -195,6 +195,10 @@ docker compose build app
 docker compose up -d
 ```
 
+For UI-only updates, run `npm run deploy:local` to rebuild and replace just the app while keeping the database and media services running. A plain container restart does not rebuild the UI.
+
+Use one app server on port 3000: Docker for deployment, or `npm run dev` for development. The development command explicitly uses port 3000 so it reports a conflict instead of silently opening another port. For development, first stop the Docker app with `docker compose stop app`.
+
 ---
 
 ## Local Ports
