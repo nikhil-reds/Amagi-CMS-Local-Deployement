@@ -63,3 +63,12 @@ next-env.d.ts
 
 # Test output artifacts
 /test-results
+/android/.tools/
+/android/.gradle/
+/android/**/build/
+/android/app/src/main/assets/
+/android/app/src/main/res/drawable/xos_logo.png
+/android/local.properties
+/android/*.jks
+/android/.signing/
+/public/XOS-Android.apk
