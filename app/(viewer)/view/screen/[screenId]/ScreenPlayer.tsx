@@ -31,7 +31,7 @@ export default function ScreenPlayer({ screenId, screenName, kiosk = false }: Sc
   if (assets.length === 0) {
     return (
       <div className="relative h-dvh bg-black text-white select-none">
-        <img src="/amagi-idle.jpg" alt="Amagi — no media assigned" className="h-full w-full object-contain" />
+        <img src="/Amagi%20Logo%20on%20Blue%20Gradient.png" alt="Amagi — no media assigned" className="h-full w-full object-contain" />
         {(connecting || connectionError) && <div className="absolute inset-x-4 bottom-4 flex flex-wrap items-center justify-center gap-3 rounded-xl bg-black/70 p-3 text-center text-sm" role="status">
           <p>{connecting ? 'Connecting to live screen updates…' : connectionError}</p>
           {connectionError && <button className="rounded-full bg-white px-5 py-2 text-sm text-black" onClick={() => { setConnecting(true); setConnectionError(''); setAttempt(value => value + 1) }}>Reconnect</button>}

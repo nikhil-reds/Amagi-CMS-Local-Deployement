@@ -1,0 +1,70 @@
+/* Sidebar matches the Multimedia Console reference: glass rail over the shared aurora,
+   34px links with a white active pill, XOS card and account footer. */
+.console-sidebar-desktop,
+.console-sidebar-rail { padding: 0; background: transparent; border: 0; }
+.console-sidebar {
+  color-scheme: dark;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 18px 12px 14px;
+  border: 0;
+  border-right: 1px solid rgba(255,255,255,.07);
+  border-radius: 0;
+  background: rgba(10,10,12,.7);
+  color: #fff;
+  font-family: var(--font-abro-sans),system-ui,sans-serif;
+}
+.console-sidebar-brand { flex: none; display: grid; gap: 10px; padding: 4px 8px 18px; }
+.console-sidebar-logo { display: flex; align-items: baseline; gap: 4px; width: 120px; height: 34px; white-space: nowrap; }
+.console-sidebar-logo-prefix { color: rgba(255,255,255,.45); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.console-sidebar-logo-wordmark { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: .04em; }
+.console-sidebar-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.console-sidebar-title { margin: 0; color: #fff; font-size: 15px; font-weight: 400; line-height: 1.3; }
+.console-sidebar-description { margin: -6px 0 0; color: rgba(255,255,255,.45); font-size: 12px; font-weight: 400; line-height: 1.4; }
+.console-sidebar-nav { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; scrollbar-width: none; }
+.console-sidebar-link { display: flex; align-items: center; flex: none; gap: 12px; height: 34px; padding: 0 12px; border-radius: 12px; color: rgba(255,255,255,.62); font-size: 14px; line-height: 1; font-weight: 400; text-decoration: none; transition: background-color 180ms ease, color 180ms ease; }
+.console-sidebar-link > svg { width: 17px; height: 17px; flex: none; }
+.console-sidebar-link:hover { background: rgba(255,255,255,.06); color: #fff; }
+.console-sidebar-link-active, .console-sidebar-link-active:hover { background: #fff; color: #000; }
+.console-sidebar-bottom { flex: none; padding: 0; }
+.console-sidebar-download { display: flex; align-items: center; gap: 10px; margin: 10px 4px 0; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); color: #fff; text-decoration: none; transition: background-color 180ms ease; }
+.console-sidebar-download:hover { background: rgba(255,255,255,.09); }
+.console-sidebar-download > svg { flex: none; width: 18px; height: 18px; stroke-width: 1.5; }
+.console-sidebar-download b { display: block; font-weight: 400; font-size: 13.5px; line-height: 1.4; }
+.console-sidebar-download small { display: block; color: rgba(255,255,255,.5); font-size: 11.5px; line-height: 1.5; }
+.console-sidebar-account { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 12px 8px 0; border-top: 1px solid rgba(255,255,255,.07); }
+.console-sidebar-profile { display: flex; align-items: center; flex: 1; min-width: 0; gap: 10px; }
+.console-sidebar-avatar { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; font-size: 14px; }
+.console-sidebar-profile > div:last-child { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.console-sidebar-profile p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.console-sidebar-profile p:first-child { color: #fff; font-size: 13px; font-weight: 400; line-height: 1.4; }
+.console-sidebar-profile p:last-child { color: rgba(255,255,255,.45); font-size: 11.5px; line-height: 1.4; }
+.console-sidebar-logout { margin-left: auto; display: grid; place-items: center; flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: rgba(255,255,255,.6); cursor: pointer; }
+.console-sidebar-logout:hover { background: rgba(255,255,255,.08); color: #fff; }
+.console-sidebar-logout:disabled { cursor: wait; opacity: .6; }
+.console-sidebar-logout > svg { width: 17px; height: 17px; stroke-width: 1.5; }
+.console-sidebar-footer { margin: 16px 8px 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); }
+.console-sidebar-footer p { margin: 0; }
+.console-sidebar-footer-brand { color: #eee; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.console-sidebar-footer-brand span { font-weight: 400; background: linear-gradient(90deg, #8094ef, #a34cbb); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.console-sidebar-footer .console-sidebar-footer-description { margin-top: 3px; max-width: 180px; color: rgba(255,255,255,.5); font-size: 11px; line-height: 1.6; }
+.console-sidebar-footer .console-sidebar-footer-copyright { margin-top: 3px; color: rgba(255,255,255,.3); font-size: 10px; line-height: 1.5; }
+.console-sidebar :is(a,button):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Tablet icon rail */
+.console-sidebar-compact { padding: 18px 8px 14px; }
+.console-sidebar-compact .console-sidebar-brand { padding: 0 0 18px; }
+.console-sidebar-compact .console-sidebar-logo { justify-content: center; width: 100%; height: 32px; overflow: hidden; }
+.console-sidebar-compact .console-sidebar-logo-prefix { display: none; }
+.console-sidebar-compact .console-sidebar-logo-wordmark { font-size: 17px; letter-spacing: .02em; }
+.console-sidebar-compact .console-sidebar-link { justify-content: center; padding: 0; }
+.console-sidebar-compact .console-sidebar-bottom { padding: 0; }
+.console-sidebar-compact .console-sidebar-download { justify-content: center; padding: 10px; }
+.console-sidebar-compact .console-sidebar-account { justify-content: center; padding-inline: 0; }
+.console-sidebar-compact .console-sidebar-logout { margin: 0; }
+
+@media (max-width: 767px) { .console-sidebar { border-radius: 0 24px 24px 0; padding-top: 20px; } }
+@media (prefers-reduced-motion: reduce) { .console-sidebar * { transition: none !important; } }

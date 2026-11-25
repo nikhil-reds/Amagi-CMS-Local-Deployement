@@ -8,6 +8,9 @@ import "./sidebar.css"
 import LogoutButton from "@/components/LogoutButton"
 import { cn } from "@/lib/utils"
 
+const windowsPlayerVersion = process.env.NEXT_PUBLIC_XOS_WINDOWS_VERSION ?? "1.0.5"
+const androidPlayerVersion = process.env.NEXT_PUBLIC_XOS_ANDROID_VERSION ?? "1.0.2"
+
 // Icons are the Multimedia Console reference set: 18px grid, 1.4 stroke, round caps.
 function NavIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -156,7 +159,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
 
       <div className="console-sidebar-bottom">
         <a
-          href="/XOS.exe?v=1.0.5"
+          href={`/XOS.exe?v=${windowsPlayerVersion}`}
           download="XOS.exe"
           title={compact ? "Download XOS (Windows)" : undefined}
           aria-label="Download XOS"
@@ -168,7 +171,7 @@ export default function AppSidebar({ onNavigate, compact = false }: AppSidebarPr
           {!compact && <span><b>Download XOS</b><small>Player app for your screens</small></span>}
         </a>
         <a
-          href="/XOS-Android.apk?v=1.0.2"
+          href={`/XOS-Android.apk?v=${androidPlayerVersion}`}
           download="XOS-Android.apk"
           title={compact ? "Download XOS (Android)" : undefined}
           aria-label="Download XOS for Android"

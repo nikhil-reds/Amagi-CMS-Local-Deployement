@@ -1,0 +1,201 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Extra breakpoint for large desktop monitors (default 2xl is 1536px). */
+@theme {
+  --breakpoint-3xl: 120rem;
+  --color-blue-50: #f1f1ff;
+  --color-blue-100: #e1e1ff;
+  --color-blue-500: #1863dc;
+  --color-blue-600: #000f93;
+  --color-blue-700: #050f64;
+  --color-purple-50: #f3f3ff;
+  --color-purple-500: #6e6eff;
+  --color-purple-700: #323243;
+  --color-sky-50: #f1f1ff;
+  --color-sky-100: #e1e1ff;
+  --color-sky-400: #6e6eff;
+  --color-sky-500: #1863dc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-poppins);
+  --font-heading: var(--font-abro-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: #ffffff;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* When inside the dark admin shell, the body/html should be black so
+   over-scroll rubber-banding never reveals a white gap. */
+html:has(.dark) {
+  background: #000;
+}
+html:has(.dark) body {
+  background: #000;
+}
+
+/* Keeps content clear of notches / home indicators. */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+
+.auth-content { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+@media (pointer: coarse) {
+  .auth-content input:not([type="checkbox"]) { min-height: 44px; font-size: 16px; }
+  .auth-content label:has(input[type="checkbox"]) { min-height: 44px; }
+}
+
+/* Centres page content and stops it stretching on very wide monitors. */
+.container-page {
+  width: 100%;
+  max-width: 1800px;
+  margin-inline: auto;
+}
+
+/* Touch dragging: stops the browser selecting text / showing the callout menu. */
+.touch-draggable {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.touch-dragging { touch-action: none; }
+
+:root {
+  --font-poppins: "Segoe UI", Arial, sans-serif;
+  --font-abro-sans: "Segoe UI", Arial, sans-serif;
+  --background: #ffffff;
+  --foreground: #0a0f34;
+  --card: #ffffff;
+  --card-foreground: #0a0f34;
+  --popover: #ffffff;
+  --popover-foreground: #0a0f34;
+  --primary: #000f93;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f1ff;
+  --secondary-foreground: #0a0f34;
+  --muted: #f1f1ff;
+  --muted-foreground: #4e4e4e;
+  --accent: #e1e1ff;
+  --accent-foreground: #0a0f34;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e7e7e7;
+  --input: #e7e7e7;
+  --ring: #6e6eff;
+  --chart-1: #000f93;
+  --chart-2: #1863dc;
+  --chart-3: #6e6eff;
+  --chart-4: #aaaaf5;
+  --chart-5: #0a0f34;
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0f34;
+  --sidebar-primary: #000f93;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f1ff;
+  --sidebar-accent-foreground: #0a0f34;
+  --sidebar-border: #e7e7e7;
+  --sidebar-ring: #6e6eff;
+}
+
+.dark {
+  --background: #0a0f34;
+  --foreground: #ffffff;
+  --card: #323243;
+  --card-foreground: #ffffff;
+  --popover: #323243;
+  --popover-foreground: #ffffff;
+  --primary: #6e6eff;
+  --primary-foreground: #0a0f34;
+  --secondary: #323243;
+  --secondary-foreground: #ffffff;
+  --muted: #323243;
+  --muted-foreground: #aaaaf5;
+  --accent: #323243;
+  --accent-foreground: #ffffff;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: #6e6eff;
+  --chart-1: #6e6eff;
+  --chart-2: #1863dc;
+  --chart-3: #000f93;
+  --chart-4: #aaaaf5;
+  --chart-5: #ffffff;
+  --sidebar: #0a0f34;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #6e6eff;
+  --sidebar-primary-foreground: #0a0f34;
+  --sidebar-accent: #323243;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: #6e6eff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6, [role="heading"] {
+    font-family: var(--font-abro-sans);
+  }
+  button, input, select, textarea {
+    font-family: var(--font-poppins);
+  }
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>XOS</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff; font-family: system-ui, sans-serif; }
+    img, video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+    iframe { width: 100%; height: 100%; border: 0; background: #fff; display: block; }
+    .layout { display: grid; width: 100%; height: 100%; overflow: hidden; }
+    .panel { min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+    .center { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px; text-align: center; background: #09090b; }
+    .idle-image { width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .connection-message { background: #000 url('amagi-idle.png') center / contain no-repeat; justify-content: flex-end; }
+    .connection-message p { padding: 12px 18px; border-radius: 12px; background: #000b; font-size: 14px; }
+    .logo { position: absolute; top: 0; left: 0; width: 220px; height: 220px; border-radius: 50%; overflow: hidden; background: #fff; box-shadow: 0 0 40px rgba(255,255,255,.18); will-change: transform; }
+    .logo img { width: 100%; height: 100%; object-fit: contain; padding: 14%; box-sizing: border-box; background: #fff; }
+    .center p { margin: 0; max-width: 640px; font-size: 20px; font-weight: 600; opacity: .85; }
+  </style>
+</head>
+<body>
+  <script src="media-runtime.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search)
+    const kind = params.get('kind')
+    const src = params.get('src') || ''
+    const name = params.get('name') || ''
+    const root = document.body
+    let longPressTimer = null
+
+    let pressPosition = null
+    function startLongPress(event) {
+      cancelLongPress()
+      if (event.button !== 0 || !event.isPrimary) return
+      pressPosition = { x: event.clientX, y: event.clientY }
+      longPressTimer = setTimeout(() => { cancelLongPress(); window.player?.actions() }, 800)
+    }
+
+    function cancelLongPress() {
+      if (longPressTimer) clearTimeout(longPressTimer)
+      longPressTimer = null
+      pressPosition = null
+    }
+
+    document.addEventListener('pointerdown', startLongPress)
+    document.addEventListener('pointerup', cancelLongPress)
+    document.addEventListener('pointercancel', cancelLongPress)
+    document.addEventListener('pointerleave', cancelLongPress)
+    document.addEventListener('pointermove', (event) => {
+      if (pressPosition && Math.hypot(event.clientX - pressPosition.x, event.clientY - pressPosition.y) > 12) cancelLongPress()
+    })
+    window.addEventListener('blur', cancelLongPress)
+    document.addEventListener('contextmenu', (event) => {
+      event.preventDefault()
+      cancelLongPress()
+      window.player?.actions()
+    })
+
+    function el(tag, props) {
+      return Object.assign(document.createElement(tag), props)
+    }
+
+    const stages = new Map()
+    const layout = el('main', { className: 'layout' })
+    let emptyMessage = null
+    function updateScreen(snapshot) {
+      const assets = snapshot.assets || []
+      const keep = new Set(assets.map(asset => asset.id))
+      for (const [id, entry] of stages) {
+        if (!keep.has(id)) { entry.stage?.destroy(); entry.panel.remove(); stages.delete(id) }
+      }
+      emptyMessage?.remove(); emptyMessage = null
+      layout.style.gridTemplateColumns = 'minmax(0, 1fr)'
+      layout.style.gridTemplateRows = `repeat(${Math.max(1, assets.length)}, minmax(0, 1fr))`
+      assets.forEach(asset => {
+        const item = { id: asset.id, kind: asset.kind, name: asset.document.name, src: asset.document.websiteUrl || asset.document.s3Url, controls: asset.controls }
+        const key = JSON.stringify([item.kind, item.src])
+        let entry = stages.get(item.id)
+        if (entry && entry.key !== key) { entry.stage?.destroy(); entry.panel.remove(); stages.delete(item.id); entry = null }
+        if (!entry) {
+          const panel = el('section', { className: 'panel', ariaLabel: item.name })
+          let stage
+          if (['pdf', 'video', 'image', 'website', 'audio'].includes(item.kind)) stage = window.MediaRuntime.mount(panel, item, { kiosk: true })
+          else { const box = el('div', { className: 'center' }); box.append(el('p', { textContent: item.name || 'Unsupported file type.' })); panel.append(box) }
+          entry = { key, panel, stage }; stages.set(item.id, entry)
+        } else entry.stage?.update(item.controls)
+        const position = assets.findIndex(asset => asset.id === item.id)
+        if (layout.children[position] !== entry.panel) layout.insertBefore(entry.panel, layout.children[position] || null)
+      })
+      if (!assets.length) { emptyMessage = el('img', { className: 'idle-image', src: 'amagi-idle.png', alt: 'Amagi — no media assigned' }); layout.append(emptyMessage) }
+    }
+    window.player?.onScreen?.(updateScreen)
+    if (kind === 'layout') {
+      root.append(layout)
+      updateScreen({ assets: [] })
+    } else if (kind === 'image') {
+      root.append(el('img', { src, alt: name }))
+    } else if (kind === 'video') {
+      root.append(el('video', { src, autoplay: true, loop: true }))
+    } else if (kind === 'audio') {
+      const box = el('div', { className: 'center' })
+      box.append(el('p', { textContent: name }), el('audio', { src, autoplay: true, loop: true }))
+      root.append(box)
+    } else if (kind === 'pdf' || kind === 'website') {
+      root.append(el('iframe', { src, title: name }))
+    } else {
+      const box = el('div', { className: 'center connection-message' })
+      box.append(el('p', { textContent: params.get('text') || '' }))
+      root.append(box)
+    }
+  </script>
+</body>
+</html>

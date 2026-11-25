@@ -8,7 +8,7 @@
   "author": "Amagi",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis --x64 --publish never",
+    "dist": "electron-builder --win nsis --x64 --publish never && node copy-release.cjs",
     "dist:portable": "electron-builder --win portable --x64 --publish never",
     "prestart": "node prepare-assets.cjs",
     "predist": "node prepare-assets.cjs",
@@ -36,7 +36,7 @@
       "player.html",
       "build-config.json",
       "icon.png",
-      "amagi-idle.jpg",
+      "amagi-idle.png",
       "package.json",
       "media-runtime.js",
       "pdfjs/**/*",

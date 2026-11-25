@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <title>XOS</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: transparent;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: #f4f4f5;
+      user-select: none;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+    }
+    .modal {
+      width: min(420px, calc(100vw - 32px));
+      padding: 28px;
+      border-radius: 18px;
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+    }
+    h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+    p.hint { margin: 0 0 20px; font-size: 13px; color: #a1a1aa; }
+    label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: #d4d4d8; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #3f3f46;
+      background: #09090b;
+      color: #fafafa;
+      font-size: 16px;
+      outline: none;
+      user-select: text;
+    }
+    input:focus { border-color: #a1a1aa; }
+    .field + .field { margin-top: 14px; }
+    button[type="submit"] {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      background: #fafafa;
+      color: #09090b;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+    .close-button { width: 100%; margin-top: 10px; padding: 11px; border: 1px solid #52525b; border-radius: 10px; background: transparent; color: #d4d4d8; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .close-button:hover { background: #27272a; color: #fff; }
+    .error { min-height: 18px; margin-top: 12px; font-size: 13px; color: #f87171; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #71717a;
+    }
+    .link { background: none; border: 0; padding: 0; color: #a1a1aa; font: inherit; cursor: pointer; text-decoration: underline; }
+    [hidden] { display: none !important; }
+    .action-icon { display: inline-block; width: 24px; margin-right: 10px; font-size: 22px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="backdrop">
+    <section class="modal" id="playerActions" role="dialog" aria-modal="true" aria-labelledby="actionsTitle" hidden>
+      <h1 id="actionsTitle">Player controls</h1>
+      <button type="button" class="close-button" id="actionClose"><span class="action-icon" aria-hidden="true">✕</span>Close player</button>
+      <button type="button" class="close-button" id="actionFullscreen"><span class="action-icon" aria-hidden="true">⛶</span>Full screen</button>
+      <button type="button" class="close-button" id="actionSettings"><span class="action-icon" aria-hidden="true">⚙</span>Server settings</button>
+    </section>
+    <form class="modal" id="form" autocomplete="off">
+      <h1 id="modalTitle">Enter Screen ID</h1>
+      <p class="hint" id="modalHint">The content assigned to this screen will play full screen.</p>
+
+      <div class="field">
+        <label for="screenId">Screen ID</label>
+        <input id="screenId" name="screenId" spellcheck="false" required />
+      </div>
+
+      <div class="field" id="serverField" hidden>
+        <label for="serverUrl">Server address</label>
+        <input id="serverUrl" name="serverUrl" placeholder="http://localhost:3000" spellcheck="false" />
+        <p class="field-help">Enter the CMS address only, without <code>/view/screen</code> or <code>/api</code>.</p>
+      </div>
+
+      <button type="submit" id="submit">Submit</button>
+      <button type="button" class="close-button" id="closePlayer">Close player</button>
+      <div class="error" id="error" role="alert"></div>
+
+      <div class="footer">
+        <button type="button" class="link" id="toggleServer">Server settings</button>
+        <span id="escHint" hidden>Esc to close</span>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('form')
+    const screenInput = document.getElementById('screenId')
+    const serverInput = document.getElementById('serverUrl')
+    const serverField = document.getElementById('serverField')
+    const submitButton = document.getElementById('submit')
+    const modalTitle = document.getElementById('modalTitle')
+    const modalHint = document.getElementById('modalHint')
+    const errorBox = document.getElementById('error')
+    const escHint = document.getElementById('escHint')
+    let canCancel = false
+    const actions = document.getElementById('playerActions')
+    window.player.onActions(() => {
+      form.hidden = true
+      actions.hidden = false
+      document.getElementById('actionClose').focus()
+    })
+    document.getElementById('actionClose').addEventListener('click', () => window.player.quit())
+    document.getElementById('actionFullscreen').addEventListener('click', () => window.player.fullscreen())
+    document.getElementById('actionSettings').addEventListener('click', () => window.player.openSettings())
+    document.querySelector('.backdrop').addEventListener('click', (event) => {
+      if (event.target === event.currentTarget && !actions.hidden) window.player.dismissActions()
+    })
+
+    function showServerField(show) {
+      serverField.hidden = !show
+    }
+
+    window.player.onShow((state) => {
+      actions.hidden = true
+      form.hidden = false
+      canCancel = state.canCancel
+      modalTitle.textContent = state.showSettings ? 'Server settings' : canCancel ? 'Reset screen' : 'Enter Screen ID'
+      modalHint.textContent = state.showSettings
+        ? 'Change the CMS server address and screen assignment.'
+        : canCancel ? 'Change the screen assignment or close the player.' : 'The content assigned to this screen will play full screen.'
+      escHint.hidden = !canCancel
+      screenInput.value = state.screenId || ''
+      serverInput.value = state.serverUrl || ''
+      showServerField(state.showSettings || !state.serverUrl)
+      errorBox.textContent = ''
+      submitButton.disabled = false
+      const input = state.showSettings ? serverInput : screenInput
+      input.focus()
+      input.select()
+    })
+
+    document.getElementById('toggleServer').addEventListener('click', () => {
+      showServerField(serverField.hidden)
+      ;(serverField.hidden ? screenInput : serverInput).focus()
+    })
+
+    document.getElementById('closePlayer').addEventListener('click', () => window.player.quit())
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      errorBox.textContent = ''
+      submitButton.disabled = true
+      submitButton.textContent = 'Loading…'
+      try {
+        const result = await window.player.submit({
+          screenId: screenInput.value,
+          serverUrl: serverInput.value,
+        })
+        if (!result.ok) {
+          errorBox.textContent = result.error
+          if (result.needServer) showServerField(true)
+        }
+      } catch (error) {
+        errorBox.textContent = String(error && error.message ? error.message : error)
+      } finally {
+        submitButton.disabled = false
+        submitButton.textContent = 'Submit'
+      }
+    })
+
+    document.addEventListener('keydown', (event) => {
+      if (!actions.hidden && event.key === 'Escape') { window.player.dismissActions(); return }
+      if (!actions.hidden && event.key === 'Tab') {
+        event.preventDefault()
+        const buttons = [...actions.querySelectorAll('button')]
+        const direction = event.shiftKey ? -1 : 1
+        const currentIndex = buttons.indexOf(document.activeElement)
+        buttons[(currentIndex + direction + buttons.length) % buttons.length].focus()
+      }
+      if (event.key === 'Escape' && canCancel) window.player.cancel()
+    })
+  </script>
+</body>
+</html>

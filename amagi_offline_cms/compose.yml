@@ -1,0 +1,68 @@
+services:
+  minio:
+    image: chrislusf/seaweedfs:4.39
+    restart: always
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      S3_BUCKET: ${MINIO_BUCKET}
+    ports:
+      - "${MINIO_API_PORT:-9000}:8333"
+      - "${MINIO_CONSOLE_PORT:-9001}:8888"
+    volumes:
+      - minio_data:/data
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    restart: always
+    command: centrifugo -c /centrifugo/config.json
+    environment:
+      CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET}
+      CENTRIFUGO_HTTP_API_KEY: ${CENTRIFUGO_API_KEY}
+    ports:
+      - "${CENTRIFUGO_PORT:-8001}:8000"
+    volumes:
+      - ./centrifugo:/centrifugo
+  db:
+    image: postgres:16-alpine
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: multimedia
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d multimedia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    image: amagi-offline-cms-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "${APP_PORT:-8000}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/multimedia
+      MINIO_ENDPOINT: http://minio:8333
+      CENTRIFUGO_HTTP_URL: http://centrifugo:8000
+      COOKIE_SECURE: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      centrifugo:
+        condition: service_started
+volumes:
+  postgres_data:
+  minio_data:

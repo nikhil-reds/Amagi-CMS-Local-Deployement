@@ -1,0 +1,68 @@
+{
+  "name": "amagi-screen-player",
+  "productName": "Amagi Screen Player",
+  "version": "1.0.5",
+  "description": "Full-screen kiosk player that shows the content assigned to an Amagi Multimedia screen.",
+  "main": "main.js",
+  "private": true,
+  "author": "Amagi",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never && node copy-release.cjs",
+    "dist:portable": "electron-builder --win portable --x64 --publish never",
+    "prestart": "node prepare-assets.cjs",
+    "predist": "node prepare-assets.cjs",
+    "predist:portable": "node prepare-assets.cjs"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "toolsets": { "nsis": "1.2.1" },
+    "appId": "com.amagi.screenplayer",
+    "productName": "Amagi Screen Player",
+    "compression": "maximum",
+    "electronLanguages": [
+      "en-US"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "player.html",
+      "build-config.json",
+      "icon.png",
+      "amagi-idle.png",
+      "package.json",
+      "media-runtime.js",
+      "pdfjs/**/*",
+      "screen-connection.cjs",
+      "centrifuge-client.cjs",
+      "!node_modules/**/*"
+    ],
+    "win": {
+      "icon": "icon.png",
+      "target": "nsis",
+      "artifactName": "AmagiScreenPlayer-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "differentialPackage": false,
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "XOS",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "AmagiScreenPlayer-Portable-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "centrifuge": "^5.3.1"
+  }
+}

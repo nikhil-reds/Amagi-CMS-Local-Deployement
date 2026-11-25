@@ -1,0 +1,351 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import { Clock, Copy, ExternalLink, Info, Monitor, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import './screens.css'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { formatDate } from '@/components/main-screen/shared'
+
+type AssignedAsset = {
+  id: string
+  document: {
+    id: string
+    name: string
+    mimeType: string
+    sourceType?: 'FILE' | 'WEBSITE'
+    websiteUrl?: string | null
+  }
+}
+
+type Screen = {
+  id: string
+  code: string
+  name: string
+  createdAt: string
+  updatedAt: string
+  assets?: AssignedAsset[]
+}
+
+export default function ScreensDashboard() {
+  const [screens, setScreens] = useState<Screen[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState<'NEWEST' | 'OLDEST' | 'NAME'>('OLDEST')
+  const [selectedDetailScreen, setSelectedDetailScreen] = useState<Screen | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+
+  const loadScreens = useCallback(async () => {
+    try {
+      const res = await fetch('/api/screens')
+      if (!res.ok) {
+        toast.error('Failed to load screens')
+        return
+      }
+      const data = await res.json()
+      setScreens(Array.isArray(data) ? data : [])
+    } catch {
+      toast.error('Failed to load screens')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadScreens()
+  }, [loadScreens])
+
+  const filteredScreens = screens
+    .filter((screen) => screen.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'NEWEST') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (sortBy === 'OLDEST') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return a.name.localeCompare(b.name)
+    })
+
+  const handleAddScreen = async () => {
+    setIsCreating(true)
+    try {
+      const res = await fetch('/api/screens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+
+      if (!res.ok) {
+        toast.error('Failed to create screen')
+        return
+      }
+
+      const newScreen = await res.json()
+      setScreens((prev) => [...prev, newScreen])
+      toast.success(`Screen "${newScreen.name}" created successfully`)
+    } catch {
+      toast.error('Failed to create screen')
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleDeleteScreen = async (id: string) => {
+    try {
+      const res = await fetch(`/api/screens/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        toast.error('Failed to delete screen')
+        return
+      }
+
+      setScreens((prev) => prev.filter((screen) => screen.id !== id))
+      const result = await res.json()
+      if (result.realtime?.delivered === false) toast.error('Screen deleted, but live delivery failed. Reconnect the player.')
+      else toast.success('Screen deleted successfully')
+    } catch {
+      toast.error('Failed to delete screen')
+    } finally {
+      setDeleteConfirmId(null)
+    }
+  }
+
+  const handleCopyScreenId = async (id: string) => {
+    try {
+      const screen = screens.find((item) => item.id === id)
+      if (!screen?.code) throw new Error('Screen ID not found')
+      await navigator.clipboard.writeText(screen.code)
+      toast.success('Screen ID copied to clipboard')
+    } catch {
+      toast.error('Unable to copy Screen ID')
+    }
+  }
+
+  // Screens presentation; existing data and event handlers are preserved.
+  return (
+    <div className="screens-page" data-screens-ui>
+      <header className="screens-header screens-management-only">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Screens</h1>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Manage your connected displays.</p>
+        </div>
+
+        <div className="screens-tools">
+          <div className="relative w-full sm:w-auto">
+            <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3.5 sm:top-2.5" />
+            <input
+              type="text"
+              placeholder="Search screens"
+              aria-label="Search screens"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 sm:py-2 text-base sm:text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white w-full sm:w-60 transition-all shadow-sm"
+            />
+          </div>
+
+          <select
+            aria-label="Sort screens"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 min-w-[calc(50%-0.25rem)] flex-1 sm:min-w-0 sm:flex-none rounded-xl px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white cursor-pointer shadow-sm"
+          >
+            <option value="NEWEST">Newest Created</option>
+            <option value="OLDEST">Oldest Created</option>
+            <option value="NAME">Screen Name (A-Z)</option>
+          </select>
+
+          <Button
+            onClick={handleAddScreen}
+            disabled={isCreating}
+            className="screens-add"
+          >
+            Add screen <span className="screens-add-dot"><PlusCircle className="w-5 h-5" /></span>
+          </Button>
+        </div>
+      </header>
+
+      <section aria-label="Screen statistics" className="screens-stats screens-management-only grid grid-cols-2 gap-3 sm:gap-5 shrink-0">
+        <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Total Screens</span>
+            <Monitor className="w-4 h-4 text-zinc-500" />
+          </div>
+          <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-none">{screens.length}</h3>
+          <p className="text-[10px] text-zinc-400">Registered displays</p>
+        </div>
+
+        <div className="bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 p-4 rounded-2xl flex flex-col gap-2.5 shadow-lg">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Recently Added</span>
+            <Clock className="w-4 h-4 text-zinc-500" />
+          </div>
+          <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-none">
+            {screens.filter((screen) => Date.now() - new Date(screen.createdAt).getTime() <= 24 * 60 * 60 * 1000).length}
+          </h3>
+          <p className="text-[10px] text-zinc-400">Created in the last 24 hours</p>
+        </div>
+      </section>
+
+      <section aria-label="Registered screens" className="screens-list screens-management-only flex-1 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border border-white/70 dark:border-zinc-800 shadow-blue-950/10 dark:shadow-black/40 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-12 rounded-lg" />
+            ))}
+          </div>
+        ) : filteredScreens.length === 0 ? (
+          <div className="screens-empty flex-1 flex flex-col items-center justify-center p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center mb-4">
+              <Monitor className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">No screens found</h3>
+            <p className="text-xs text-zinc-400 max-w-xs mt-1 leading-relaxed">
+              Create a screen to start tracking display endpoints.
+            </p>
+            <Button onClick={handleAddScreen} className="mt-6 bg-black dark:bg-white hover:bg-zinc-900 dark:hover:bg-zinc-200 text-white dark:text-black font-semibold text-xs py-2 px-5 rounded-xl cursor-pointer">
+              Add Screen
+            </Button>
+          </div>
+        ) : (
+          <>
+          <div className="screens-table flex-1 overflow-auto">
+          <Table>
+            <TableHeader className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
+              <TableRow>
+                <TableHead className="p-4 text-center text-xs font-bold text-zinc-500 dark:text-zinc-400">Screen ID</TableHead>
+                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Screen Name</TableHead>
+                <TableHead className="screens-created-column text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4">Created Date</TableHead>
+                <TableHead className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest p-4 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredScreens.map((screen) => {
+
+                return (
+                  <TableRow key={screen.id} className={`border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors`}>
+                    <TableCell className="p-4 text-center text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                      {screen.code}
+                    </TableCell>
+                    <TableCell className="p-4 font-semibold text-zinc-800 dark:text-zinc-100 text-xs">
+                      <div className="screens-name">
+                        <span className="screens-monitor"><Monitor className="w-5 h-5" /></span>
+                        <span><b>{screen.name}</b></span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="screens-created-column p-4 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(screen.createdAt)}</TableCell>
+                    <TableCell className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedDetailScreen(screen)}
+                          className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                          aria-label={`View ${screen.name}`}
+                          title="Screen info"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => window.open(`/view/screen/${screen.code}`, '_blank', 'noopener,noreferrer')}
+                          className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                          aria-label={`Open ${screen.name}`}
+                          title="Open screen URL"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                        <button
+                           onClick={() => handleCopyScreenId(screen.id)}
+                          className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                           aria-label={`Copy Screen ID for ${screen.name}`}
+                           title="Copy Screen ID"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(screen.id)}
+                          className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-all cursor-pointer"
+                          aria-label={`Delete ${screen.name}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+          </div>
+          </>
+        )}
+      </section>
+
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <DialogContent data-screens-dialog className="bg-white dark:bg-zinc-950 rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this screen? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="screens-dialog-footer mt-4">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="text-xs">Cancel</Button>
+            <Button
+              onClick={() => deleteConfirmId && handleDeleteScreen(deleteConfirmId)}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={selectedDetailScreen !== null} onOpenChange={(open) => !open && setSelectedDetailScreen(null)}>
+        <SheetContent data-screens-drawer className="w-full sm:max-w-md bg-white dark:bg-zinc-950 p-4 sm:p-6 overflow-hidden shadow-2xl flex flex-col gap-0">
+          {selectedDetailScreen && (
+            <>
+              <SheetHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <SheetTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Monitor className="w-5 h-5 text-black dark:text-white" />
+                  {selectedDetailScreen.name}
+                </SheetTitle>
+                <SheetDescription className="text-xs text-zinc-400 dark:text-zinc-500">
+                  Screen registration details.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="screens-drawer-body space-y-4 text-xs">
+                <div className="grid grid-cols-3 gap-3">
+                  <span className="text-zinc-400 dark:text-zinc-500 font-medium">Created</span>
+                  <span className="col-span-2 text-zinc-800 dark:text-zinc-100 font-semibold">{formatDate(selectedDetailScreen.createdAt)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <span className="text-zinc-400 dark:text-zinc-500 font-medium">Updated</span>
+                  <span className="col-span-2 text-zinc-800 dark:text-zinc-100 font-semibold">{formatDate(selectedDetailScreen.updatedAt)}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  )
+}

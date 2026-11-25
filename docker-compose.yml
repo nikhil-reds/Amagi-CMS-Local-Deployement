@@ -23,7 +23,7 @@ services:
       CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET}
       CENTRIFUGO_HTTP_API_KEY: ${CENTRIFUGO_API_KEY}
     ports:
-      - "${CENTRIFUGO_PORT:-8000}:8000"
+      - "${CENTRIFUGO_PORT:-8001}:8000"
     volumes:
       - ./centrifugo:/centrifugo
 
@@ -54,7 +54,7 @@ services:
     restart: always
     # Listens on port 3000 on every network interface of the PC, so other devices on the WiFi can reach it.
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-8000}:3000"
     env_file:
       - .env # MinIO, Centrifugo, and other service keys. DATABASE_URL is overridden below.
     environment:

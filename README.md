@@ -295,10 +295,10 @@ npm run dist       # builds the fast installed desktop/dist/AmagiScreenPlayer-Se
 npm run dist:portable # optional self-extracting build; slower to open
 ```
 
-Copy the setup `.exe` to `public/XOS.exe` for the sidebar download link. The installer
-creates the XOS Desktop and Start menu shortcuts and avoids extracting Chromium on every launch.
+The desktop build now copies the setup `.exe` to `public/XOS.exe`, the sidebar download target.
+The installer creates the XOS Desktop and Start menu shortcuts and avoids extracting Chromium on every launch.
 
-> Rebuild XOS after any renderer or PDF.js changes, then copy the new `.exe` to `public/XOS.exe`.
+> Rebuild XOS after any renderer or PDF.js changes; the build copies the new `.exe` to `public/XOS.exe` automatically.
 
 ---
 

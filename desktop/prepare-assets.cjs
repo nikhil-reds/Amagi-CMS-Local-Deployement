@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 require('../scripts/prepare-media.cjs');
 fs.copyFileSync(path.join(__dirname, '../public/xox-logo.png'), path.join(__dirname, 'icon.png'));
-fs.copyFileSync(path.join(__dirname, '../public/amagi-idle.jpg'), path.join(__dirname, 'amagi-idle.jpg'));
+fs.copyFileSync(path.join(__dirname, '../public/Amagi Logo on Blue Gradient.png'), path.join(__dirname, 'amagi-idle.png'));
 fs.copyFileSync(path.join(__dirname, '../public/media-runtime.js'), path.join(__dirname, 'media-runtime.js'));
 fs.cpSync(path.join(__dirname, '../public/pdfjs'), path.join(__dirname, 'pdfjs'), { recursive: true });
 // The JSON Centrifuge client is self-contained. Packaging just this runtime avoids
